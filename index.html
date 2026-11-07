@@ -369,6 +369,31 @@
       .live-meter.hot .bar i { background: var(--bad); }
       .live-meter.hot .db { color: var(--bad); font-weight: 700; }
 
+      /* ---------- home menu & page routing ---------- */
+      .menu-list { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 14px; }
+      @media (min-width: 720px) { .menu-list { grid-template-columns: 1fr 1fr; } }
+      .menu-item {
+        appearance: none; border: 1px solid var(--line); background: var(--surface);
+        color: var(--ink); border-radius: 12px; padding: 13px 14px; cursor: pointer;
+        text-align: left; font: inherit; box-shadow: var(--shadow);
+        display: flex; align-items: center; gap: 12px; width: 100%;
+      }
+      .menu-item:hover { border-color: var(--accent); }
+      .menu-item .mi-icon { flex: none; color: var(--accent); display: flex; }
+      .menu-item .mi-body { flex: 1; min-width: 0; }
+      .menu-item .mi-t { display: block; font-weight: 700; font-size: 16px; }
+      .menu-item .mi-d { display: block; color: var(--ink-soft); font-size: 13px; margin-top: 1px; line-height: 1.45; }
+      .menu-item .mi-arrow { flex: none; color: var(--ink-soft); display: flex; }
+      .page-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+      .page-top h2 { font-size: 20px; margin: 0; line-height: 1.3; }
+      .back-btn {
+        appearance: none; font: inherit; cursor: pointer; border-radius: 9px;
+        border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+        padding: 9px 13px; display: inline-flex; align-items: center; gap: 7px;
+        font-size: 14.5px; font-weight: 700; box-shadow: var(--shadow); flex: none;
+      }
+      .back-btn:hover { border-color: var(--accent); }
+
       footer { color: var(--ink-soft); font-size: 12.5px; text-align: center; margin-top: 4px; line-height: 1.6; padding: 0 8px; }
       .srcnote { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: flex-start; }
       .srcnote svg { flex: none; margin-top: 2px; color: var(--accent); }
@@ -378,7 +403,7 @@
   </head>
   <body>
     <main>
-      <header>
+      <header id="home-header">
         <h1>调音台 EQ 训练 <span class="thin">· 听频段</span></h1>
         <p>系统随机提升或衰减一个频段，你来听出是哪个频率。先在参考练习里听熟每个频段的声音性格，再进盲听测试练判断。</p>
         <div class="howto">
@@ -387,38 +412,55 @@
         </div>
       </header>
 
-      <div class="tabs" role="tablist" aria-label="训练模式">
-        <button class="tab" id="tab-quiz" role="tab" aria-selected="true">
-          <span class="t"><i data-lucide="target" width="18" height="18"></i>盲听测试</span>
-          <span class="d">随机动一个频段，猜是哪个</span>
+      <nav class="menu-list" id="home-menu" aria-label="功能菜单">
+        <button class="menu-item" data-page="quiz">
+          <span class="mi-icon"><i data-lucide="target" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">盲听测试</span><span class="mi-d">随机动一个频段，你来猜是哪个频率</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
-        <button class="tab" id="tab-ref" role="tab" aria-selected="false">
-          <span class="t"><i data-lucide="book-open" width="18" height="18"></i>参考练习</span>
-          <span class="d">逐个听频段性格</span>
+        <button class="menu-item" data-page="ref">
+          <span class="mi-icon"><i data-lucide="book-open" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">参考练习</span><span class="mi-d">逐个频段听熟它的声音性格</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
-        <button class="tab" id="tab-ex" role="tab" aria-selected="false">
-          <span class="t"><i data-lucide="gem" width="18" height="18"></i>典范聆听</span>
-          <span class="d">先听调好的目标声</span>
+        <button class="menu-item" data-page="ex">
+          <span class="mi-icon"><i data-lucide="gem" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">典范聆听</span><span class="mi-d">先听调好的目标声，再和原声对比</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
-        <button class="tab" id="tab-solo" role="tab" aria-selected="false">
-          <span class="t"><i data-lucide="audio-waveform" width="18" height="18"></i>单频段聆听</span>
-          <span class="d">只放单个频段，切换对比</span>
+        <button class="menu-item" data-page="solo">
+          <span class="mi-icon"><i data-lucide="audio-waveform" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">单频段聆听</span><span class="mi-d">只放一个频段，逐个切换对比里面装了什么</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
-        <button class="tab" id="tab-fb" role="tab" aria-selected="false">
-          <span class="t"><i data-lucide="siren" width="18" height="18"></i>找啸叫</span>
-          <span class="d">听出啸叫频率，再亲手止啸</span>
+        <button class="menu-item" data-page="feedback">
+          <span class="mi-icon"><i data-lucide="siren" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">找啸叫</span><span class="mi-d">听出啸叫在哪个频段，再亲手窄切止啸</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
-        <button class="tab" id="tab-manual" role="tab" aria-selected="false">
-          <span class="t"><i data-lucide="sliders-vertical" width="18" height="18"></i>手动调 EQ</span>
-          <span class="d">九段推子，边推边听</span>
+        <button class="menu-item" data-page="manual">
+          <span class="mi-icon"><i data-lucide="sliders-vertical" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">手动调 EQ</span><span class="mi-d">九段推子加 Q 值，边推边听声音变化</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
-        <button class="tab" id="tab-live" role="tab" aria-selected="false">
-          <span class="t"><i data-lucide="mic" width="18" height="18"></i>现场监听</span>
-          <span class="d">用手机麦克风听现场、抓啸叫</span>
+        <button class="menu-item" data-page="live">
+          <span class="mi-icon"><i data-lucide="mic" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">现场监听</span><span class="mi-d">用手机麦克风听现场，抓啸叫并给 EQ 建议</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
+        <button class="menu-item" data-page="zones">
+          <span class="mi-icon"><i data-lucide="layout-grid" width="22" height="22"></i></span>
+          <span class="mi-body"><span class="mi-t">EQ 区块划分</span><span class="mi-d">按区块理解频率，点任意区块直接去试听</span></span>
+          <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
+        </button>
+      </nav>
+
+      <div class="page-top hidden" id="page-top">
+        <button class="back-btn" id="btn-back"><i data-lucide="arrow-left" width="17" height="17"></i><span>返回主页</span></button>
+        <h2 id="page-title"></h2>
       </div>
 
-      <section class="panel" aria-label="播放与设置">
+      <section class="panel hidden" id="panel-play" aria-label="播放与设置">
         <div class="controls">
           <div class="field" style="flex:1 1 100%">
             <label>音源</label>
@@ -538,7 +580,7 @@
         <p class="ex-note">每个典范来回切原声对比听 3–5 遍，先记住目标声，再动手调。</p>
       </section>
 
-      <section class="panel" id="panel-bands" aria-label="频段选择">
+      <section class="panel hidden" id="panel-bands" aria-label="频段选择">
         <h2 id="bands-title"><i data-lucide="sliders-horizontal" width="18" height="18"></i><span>被动了哪个频段？点一个</span></h2>
 
         <div class="scorebar" id="scorebar">
@@ -663,7 +705,7 @@
         </div>
       </section>
 
-      <section class="panel" aria-label="现场速记">
+      <section class="panel hidden" id="panel-tips" aria-label="现场速记">
         <h2><i data-lucide="notebook-pen" width="18" height="18"></i>现场速记</h2>
         <ul class="tips">
           <li><b>人声闷、不清楚</b> —— 先在 <span class="mono">250–400 Hz</span> 小切 2–3 dB，别急着推高频，推高频只会把齿音和啸叫一起推上来。</li>
@@ -675,7 +717,7 @@
 
       <!-- EQ 区块划分板块。标题是临时名（用户之后会给正式名，如「EQ 教程」）：
            要改名，只改下面 h2 里 span 的文字这一处即可。 -->
-      <section class="panel" aria-label="EQ 区块划分">
+      <section class="panel hidden" id="panel-zones" aria-label="EQ 区块划分">
         <h2><i data-lucide="layout-grid" width="18" height="18"></i><span id="zones-title">EQ 区块划分</span></h2>
         <p style="margin:0 0 12px;font-size:14.5px;color:var(--ink-soft)">共 7 个区块。点任意区块，直接跳到单频段聆听试听。</p>
         <div class="zones" id="zones">
@@ -721,7 +763,7 @@
         </div>
       </section>
 
-      <section class="panel" aria-label="安装到手机">
+      <section class="panel" id="panel-install" aria-label="安装到手机">
         <h2><i data-lucide="smartphone" width="18" height="18"></i><span>装到手机上，像 App 一样打开</span></h2>
         <button class="btn primary hidden" id="btn-install"><i data-lucide="download" width="18" height="18"></i><span>安装「调音台 EQ 训练」</span></button>
         <ul class="install-steps">
@@ -732,7 +774,7 @@
         <p id="pwa-status">正在检测这台设备上的安装与离线状态…</p>
       </section>
 
-      <footer>音源出处：朗诵与朗读来自 LibriVox（公有领域）；三首英文歌为美国空军乐队官方录音（公有领域）。片段已存入本页，播放不依赖网络。<br>成绩只在本次打开期间保留。</footer>
+      <footer id="home-footer">音源出处：朗诵与朗读来自 LibriVox（公有领域）；三首英文歌为美国空军乐队官方录音（公有领域）。片段已存入本页，播放不依赖网络。<br>成绩只在本次打开期间保留。</footer>
     </main>
 
     <script>
@@ -2220,21 +2262,18 @@
           if (mode === 'feedback' && m !== 'feedback' && fbBandIdx >= 0) stopFeedback(true);
           if (mode === 'live' && m !== 'live') stopLive(true);
           mode = m;
-          $('tab-quiz').setAttribute('aria-selected', m === 'quiz' ? 'true' : 'false');
-          $('tab-ref').setAttribute('aria-selected', m === 'ref' ? 'true' : 'false');
-          $('tab-ex').setAttribute('aria-selected', m === 'ex' ? 'true' : 'false');
-          $('tab-solo').setAttribute('aria-selected', m === 'solo' ? 'true' : 'false');
-          $('tab-fb').setAttribute('aria-selected', m === 'feedback' ? 'true' : 'false');
-          $('tab-manual').setAttribute('aria-selected', m === 'manual' ? 'true' : 'false');
-          $('tab-live').setAttribute('aria-selected', m === 'live' ? 'true' : 'false');
           $('field-diff').classList.toggle('hidden', m !== 'quiz');
           $('field-refdir').classList.toggle('hidden', m !== 'ref');
           $('scorebar').classList.toggle('hidden', m !== 'quiz');
+          $('panel-play').classList.toggle('hidden', m === 'live' || m === 'zones');
           $('panel-ex').classList.toggle('hidden', m !== 'ex');
           $('panel-fb').classList.toggle('hidden', m !== 'feedback');
           $('panel-manual').classList.toggle('hidden', m !== 'manual');
           $('panel-live').classList.toggle('hidden', m !== 'live');
-          $('panel-bands').classList.toggle('hidden', m === 'ex' || m === 'manual' || m === 'live');
+          $('panel-zones').classList.toggle('hidden', m !== 'zones');
+          $('panel-tips').classList.toggle('hidden', m !== 'zones');
+          $('panel-bands').classList.toggle('hidden', m === 'ex' || m === 'manual' || m === 'live' || m === 'zones');
+          if (m !== 'quiz') $('summary').classList.remove('show');
           if (m === 'ex') $('summary').classList.remove('show');
           $('bands-title').querySelector('span').textContent =
             m === 'quiz' ? '被动了哪个频段？点一个'
@@ -2294,6 +2333,11 @@
             // playback so the speaker cannot feed the microphone.
             if (playing) stopPlayback();
             elStatus.textContent = '现场监听：点下方「开始监听」，用手机麦克风听现场。这里只给建议，不出声、不改任何设置。';
+          } else if (m === 'zones') {
+            quiz = null;
+            abOriginal = false;
+            updateAB();
+            btnAB.disabled = true;
           } else if (m === 'ref') {
             quiz = null;
             elStatus.textContent = refIdx >= 0 ? elStatus.textContent : '点任意频段开始听。先从 250 Hz、2 kHz、8 kHz 这几个现场最常用的听起。';
@@ -2322,14 +2366,55 @@
           });
         }
 
+        /* ============ page routing: home menu <-> feature pages ============
+           One page is on screen at a time. Home shows only the header,
+           the menu, the install panel and the footer; a feature page
+           shows only the back bar plus that feature's own panels.
+           Leaving a page stops everything it could be sounding with:
+           source playback, the feedback simulation, and the live mic. */
+        var PAGE_TITLES = {
+          quiz: '盲听测试', ref: '参考练习', ex: '典范聆听', solo: '单频段聆听',
+          feedback: '找啸叫', manual: '手动调 EQ', live: '现场监听', zones: 'EQ 区块划分'
+        };
+        function stopAllActivity() {
+          if (fbBandIdx >= 0) stopFeedback(true);
+          stopLive(true);
+          stopPlayback();
+        }
+        function hideAllPanels() {
+          ['panel-play', 'panel-ex', 'panel-bands', 'panel-fb', 'panel-manual', 'panel-live', 'panel-zones', 'panel-tips'].forEach(function (id) {
+            var el = $(id);
+            if (el) el.classList.add('hidden');
+          });
+          $('summary').classList.remove('show');
+        }
+        function goHome() {
+          stopAllActivity();
+          hideAllPanels();
+          $('page-top').classList.add('hidden');
+          $('home-header').classList.remove('hidden');
+          $('home-menu').classList.remove('hidden');
+          $('panel-install').classList.remove('hidden');
+          $('home-footer').classList.remove('hidden');
+          window.scrollTo(0, 0);
+        }
+        function openPage(m) {
+          stopAllActivity();
+          $('home-header').classList.add('hidden');
+          $('home-menu').classList.add('hidden');
+          $('panel-install').classList.add('hidden');
+          $('home-footer').classList.add('hidden');
+          $('page-top').classList.remove('hidden');
+          $('page-title').textContent = PAGE_TITLES[m] || '';
+          setMode(m);
+          window.scrollTo(0, 0);
+        }
+
         /* ============ events ============ */
-        $('tab-quiz').addEventListener('click', function () { setMode('quiz'); });
-        $('tab-ref').addEventListener('click', function () { setMode('ref'); });
-        $('tab-ex').addEventListener('click', function () { setMode('ex'); });
-        $('tab-solo').addEventListener('click', function () { setMode('solo'); });
-        $('tab-fb').addEventListener('click', function () { setMode('feedback'); });
-        $('tab-manual').addEventListener('click', function () { setMode('manual'); });
-        $('tab-live').addEventListener('click', function () { setMode('live'); });
+        document.querySelectorAll('.menu-item').forEach(function (b) {
+          b.addEventListener('click', function () { openPage(b.dataset.page); });
+        });
+        $('btn-back').addEventListener('click', goHome);
 
         /* ---- live mic monitor controls ---- */
         $('btn-live-start').addEventListener('click', liveStart);
@@ -2395,7 +2480,7 @@
           b.addEventListener('click', function () {
             var bi = Number(b.dataset.band);
             if (isNaN(bi) || bi < 0 || bi >= BANDS.length) return;
-            setMode('solo');
+            openPage('solo');
             selectSolo(bi);
             var pb = $('panel-bands');
             if (pb && pb.scrollIntoView) {
@@ -2512,6 +2597,7 @@
         renderBands();
         updateScore();
         btnNew.classList.remove('hidden');
+        goHome();
         if (!rtaRunning) { rtaRunning = true; requestAnimationFrame(drawRTA); }
         icons();
       })();
