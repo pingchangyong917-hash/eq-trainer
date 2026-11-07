@@ -345,6 +345,30 @@
       @media (prefers-color-scheme: dark) { .fader .qseg button[aria-pressed="true"] { color: #1c1503; } }
       .fader .qlbl { display: block; font-size: 11px; color: var(--ink-soft); margin-top: 5px; }
 
+      /* ---------- live mic monitor ---------- */
+      .live-note {
+        display: flex; gap: 10px; align-items: flex-start;
+        background: var(--accent-soft); border-radius: var(--radius);
+        padding: 12px 14px; font-size: 14.5px; margin-bottom: 14px;
+      }
+      .live-note svg { flex: none; margin-top: 3px; color: var(--accent-strong); }
+      .live-note b { color: var(--accent-strong); }
+      .axis span.hot { color: #ef7d75; font-weight: 700; }
+      .axis span.hot::before { background: #ef7d75; }
+      .live-meters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+      @media (min-width: 720px) { .live-meters { grid-template-columns: repeat(9, 1fr); } }
+      .live-meter {
+        background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 8px 8px 9px; text-align: center;
+      }
+      .live-meter .fr { display: block; font-size: 13.5px; font-weight: 700; }
+      .live-meter .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+      .live-meter .bar i { display: block; height: 100%; width: 0%; background: var(--accent); border-radius: 999px; }
+      .live-meter .db { display: block; font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; min-height: 17px; }
+      .live-meter.hot { border-color: var(--bad); background: var(--bad-soft); }
+      .live-meter.hot .bar i { background: var(--bad); }
+      .live-meter.hot .db { color: var(--bad); font-weight: 700; }
+
       footer { color: var(--ink-soft); font-size: 12.5px; text-align: center; margin-top: 4px; line-height: 1.6; padding: 0 8px; }
       .srcnote { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: flex-start; }
       .srcnote svg { flex: none; margin-top: 2px; color: var(--accent); }
@@ -387,6 +411,10 @@
         <button class="tab" id="tab-manual" role="tab" aria-selected="false">
           <span class="t"><i data-lucide="sliders-vertical" width="18" height="18"></i>手动调 EQ</span>
           <span class="d">九段推子，边推边听</span>
+        </button>
+        <button class="tab" id="tab-live" role="tab" aria-selected="false">
+          <span class="t"><i data-lucide="mic" width="18" height="18"></i>现场监听</span>
+          <span class="d">用手机麦克风听现场、抓啸叫</span>
         </button>
       </div>
 
@@ -596,6 +624,35 @@
         <p style="margin:12px 0 0;font-size:14px;color:var(--ink-soft)">每个频段下面的「宽 / 中 / 窄」是 Q 值：宽影响一大片、动起来柔和；窄只动很小一截，适合精准切掉某个点（比如止啸）。推完点「目标曲线对照」，看看你的曲线和建议的差在哪。</p>
       </section>
 
+      <section class="panel hidden" id="panel-live" aria-label="现场监听">
+        <h2><i data-lucide="mic" width="18" height="18"></i><span>现场监听 · 麦克风实时分析</span></h2>
+        <div class="live-note">
+          <i data-lucide="shield-check" width="18" height="18"></i>
+          <div><b>只在这台手机上分析，不录音、不上传。</b>麦克风的声音只用来画频谱、找啸叫，不会存下来，也不会发到任何服务器。<b>监听时请勿用手机外放播放</b>——本模式本身不出声，手机外放的声音会干扰监听、还可能自己引起啸叫。这里只给<b>建议</b>，不会自动改任何 EQ 设置，调还是你在调音台上动手。</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn primary" id="btn-live-start"><i data-lucide="mic" width="18" height="18"></i><span>开始监听</span></button>
+          <button class="btn" id="btn-live-stop" disabled><i data-lucide="square" width="18" height="18"></i><span>停止监听</span></button>
+        </div>
+        <p class="status" id="live-status" style="margin:0 0 12px">还没开始。点「开始监听」，把手机放在能听清现场的位置（别贴着音箱），弹出请求时允许使用麦克风。</p>
+        <div class="screen">
+          <canvas id="live-rta" width="900" height="112" aria-hidden="true"></canvas>
+          <div class="axis mono" id="live-axis" aria-hidden="true"></div>
+          <div class="cap">
+            <span class="mono">20 Hz</span>
+            <span>麦克风实时频谱 · 红色高亮 = 疑似啸叫频段</span>
+            <span class="mono">20 kHz</span>
+          </div>
+        </div>
+        <div class="live-meters" id="live-meters" aria-label="各频段实时电平"></div>
+        <div class="feedback no" id="live-alert" role="alert" style="margin-top:14px"></div>
+        <h3 style="font-size:15.5px;margin:16px 0 4px">现场 EQ 建议（随声音实时变）</h3>
+        <ul class="tips" id="live-advice">
+          <li>开始监听后，这里会按各频段的实时电平给出调整建议。</li>
+        </ul>
+        <p style="margin:10px 0 0;font-size:13.5px;color:var(--ink-soft)">检测靠的是手机麦克风，受机型和现场环境影响：它抓的是持续约 1 秒以上的窄峰，短促的喊声、掌声、乐器声不会报成啸叫。第一次用时，先对着熟悉的现场试一轮，再决定信几分。</p>
+      </section>
+
       <section class="panel hidden" id="summary" aria-label="本组成绩">
         <h2><i data-lucide="award" width="18" height="18"></i>本组结果</h2>
         <div class="big-score"><span id="sum-score">0</span><small> / 10 题答对</small></div>
@@ -791,6 +848,14 @@
         var fbTried = 0, fbRight = 0, fbNotchedCount = 0;
         var notchBandIdx = -1, notchDepth = 8, notchQ = 8;
         var notchDone = false;       // success already counted for this ring
+        /* ---- live mic monitor state (separate graph: mic -> analyser,
+           never connected to any destination, so the phone stays silent) ---- */
+        var liveCtx = null, liveStream = null, liveSrc = null, liveAnalyser = null;
+        var liveOn = false, liveRaf = 0, liveFrame = 0;
+        var liveSmooth = null;       // EMA-smoothed per-band dB for advice
+        var liveCand = -1, liveCandSince = 0;  // candidate feedback band + when it appeared
+        var liveFb = -1, liveFbLastSeen = 0;   // confirmed feedback band
+        var liveLastAdvice = 0;
         var srcNode = null, playing = false, abOriginal = false;
         var rtaRunning = false, playGen = 0;
         var musicBuf = null, noiseBuf = null;
@@ -1422,6 +1487,286 @@
           });
         }
 
+        /* ============ live mic monitor ============ */
+        var liveCanvas = $('live-rta'), liveCtx2d = liveCanvas.getContext('2d');
+
+        function buildLiveUI() {
+          var axis = $('live-axis');
+          BANDS.forEach(function (b, i) {
+            var s = document.createElement('span');
+            s.dataset.f = b.f;
+            if (i === BANDS.length - 1) s.className = 'last';
+            s.style.left = (freqX(b.f, 100)) + '%';
+            s.textContent = b.f >= 1000 ? (b.f / 1000) + 'k' : String(b.f);
+            axis.appendChild(s);
+          });
+          var wrap = $('live-meters');
+          BANDS.forEach(function (b, i) {
+            var cell = document.createElement('div');
+            cell.className = 'live-meter';
+            cell.id = 'lm-' + i;
+            var fr = document.createElement('span');
+            fr.className = 'fr mono';
+            fr.textContent = b.label;
+            var bar = document.createElement('div');
+            bar.className = 'bar';
+            var fill = document.createElement('i');
+            bar.appendChild(fill);
+            var db = document.createElement('span');
+            db.className = 'db mono';
+            db.textContent = '—';
+            cell.appendChild(fr); cell.appendChild(bar); cell.appendChild(db);
+            wrap.appendChild(cell);
+          });
+        }
+
+        function liveFmtFreq(f) {
+          if (f >= 1000) return '约 ' + (Math.round(f / 100) / 10) + ' kHz';
+          return '约 ' + Math.round(f / 10) * 10 + ' Hz';
+        }
+
+        function liveError(msg) {
+          liveOn = false;
+          $('btn-live-start').disabled = false;
+          $('btn-live-stop').disabled = true;
+          $('live-status').textContent = msg;
+        }
+
+        function liveStart() {
+          if (liveOn) return;
+          var md = navigator.mediaDevices;
+          if (!md || typeof md.getUserMedia !== 'function') {
+            liveError('这个浏览器拿不到麦克风（麦克风需要用 HTTPS 打开本页）。在 iPhone 上请用 Safari 打开本页，再点「开始监听」。');
+            return;
+          }
+          $('live-status').textContent = '正在请求麦克风…弹出请求时点「允许」。';
+          // echoCancellation / noiseSuppression / autoGainControl off:
+          // processing would smear the narrow peak we are hunting for.
+          md.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+            .then(function (stream) {
+              var AC = window.AudioContext || window.webkitAudioContext;
+              liveCtx = new AC();
+              if (liveCtx.resume) { var rp = liveCtx.resume(); if (rp && rp.catch) rp.catch(function () {}); }
+              liveStream = stream;
+              liveSrc = liveCtx.createMediaStreamSource(stream);
+              liveAnalyser = liveCtx.createAnalyser();
+              liveAnalyser.fftSize = 4096;
+              liveAnalyser.smoothingTimeConstant = 0.55;
+              // Deliberately NOT connected to liveCtx.destination:
+              // the phone must not play the mic back (that would feed
+              // back itself and pollute the measurement).
+              liveSrc.connect(liveAnalyser);
+              liveOn = true;
+              liveSmooth = null; liveCand = -1; liveFb = -1; liveFrame = 0; liveLastAdvice = 0;
+              $('btn-live-start').disabled = true;
+              $('btn-live-stop').disabled = false;
+              $('live-status').innerHTML = '正在监听…把手机放在能听清现场的位置，别贴着音箱。<b>监听中不会出声</b>，也不会改任何设置。';
+              liveRaf = requestAnimationFrame(liveLoop);
+            })
+            .catch(function (err) {
+              if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+                liveError('麦克风没有被允许，现在听不到现场。请去 iPhone 的「设置 → Safari → 麦克风」里允许，或点地址栏左侧的网站设置允许麦克风，然后点「开始监听」重试。');
+              } else if (err && err.name === 'NotFoundError') {
+                liveError('这台设备上找不到可用的麦克风。确认麦克风没被其他 App 占用后，点「开始监听」重试。');
+              } else {
+                liveError('麦克风打开失败（' + (err && err.name ? err.name : '未知错误') + '）。点「开始监听」重试；一直失败的话，关掉其他正在用麦克风的 App 再试。');
+              }
+            });
+        }
+
+        function stopLive(silent) {
+          if (liveRaf) { cancelAnimationFrame(liveRaf); liveRaf = 0; }
+          if (liveStream) {
+            liveStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+            liveStream = null;
+          }
+          if (liveCtx) { try { liveCtx.close(); } catch (e) {} liveCtx = null; }
+          liveSrc = null; liveAnalyser = null;
+          liveOn = false; liveCand = -1; liveFb = -1; liveSmooth = null;
+          $('btn-live-start').disabled = false;
+          $('btn-live-stop').disabled = true;
+          var alert = $('live-alert');
+          alert.className = 'feedback no'; alert.innerHTML = '';
+          BANDS.forEach(function (b, i) {
+            var cell = $('lm-' + i);
+            if (!cell) return;
+            cell.classList.remove('hot');
+            cell.querySelector('.bar i').style.width = '0%';
+            cell.querySelector('.db').textContent = '—';
+          });
+          var kids = $('live-axis').children;
+          for (var i = 0; i < kids.length; i++) kids[i].classList.remove('hot');
+          if (!silent) $('live-status').textContent = '已停止监听，麦克风已关闭。';
+        }
+
+        function showLiveAlert(bandIdx, peakFreq) {
+          var b = BANDS[bandIdx];
+          var el = $('live-alert');
+          el.innerHTML =
+            '<div class="head"><i data-lucide="siren" width="18" height="18"></i><span>检测到啸叫：' + liveFmtFreq(peakFreq) + '（' + b.label + ' 频段）</span></div>' +
+            '<p>' + FB_TRAITS[bandIdx] + '</p>' +
+            '<div class="action"><b>先止住：</b>把这支话筒的音量或增益先拉下来一点，别让它继续涨。</div>' +
+            '<div class="action"><b>再处理：</b>在 <span class="mono">' + b.label + '</span> 附近用窄 Q（8–14）切 <b>3–6 dB</b>，先切 3 dB，不够再一档档加深；切完往回退一点，找到刚好不响的位置。</div>' +
+            '<div class="action"><b>查位置：</b>话筒离音箱 / 返送是不是太近或正对着？挪开距离、偏开角度，往往比继续切 EQ 更管用。</div>';
+          el.classList.add('show');
+          icons();
+        }
+
+        function liveSetAdvice(lines) {
+          var ul = $('live-advice');
+          ul.innerHTML = '';
+          lines.forEach(function (t) {
+            var li = document.createElement('li');
+            li.textContent = t;
+            ul.appendChild(li);
+          });
+        }
+
+        /* Rule-based live EQ advice from the smoothed per-band levels.
+           Relative levels only (phone mics are not calibrated): compare
+           each band group with the overall mean, and only speak up when
+           something sticks out clearly. Everything is phrased as a
+           suggestion — nothing here touches any EQ setting. */
+        function liveAdviceUpdate() {
+          if (!liveSmooth) return;
+          var mx = -Infinity, sum = 0;
+          liveSmooth.forEach(function (v) { if (v > mx) mx = v; sum += v; });
+          var mean = sum / liveSmooth.length;
+          if (mx < -62) {
+            liveSetAdvice(['现在声音很小或很安静——等现场有正常音量的人声或音乐时，下面的建议才准。']);
+            return;
+          }
+          function rel(i) { return liveSmooth[i] - mean; }
+          function relAvg(a, b) { return (liveSmooth[a] + liveSmooth[b]) / 2 - mean; }
+          var lines = [];
+          if (liveFb >= 0) lines.push('有啸叫先止啸（看上方红色提示），止住之后再看下面的整体建议。');
+          if (relAvg(0, 1) > 6) lines.push('建议：低频（63 / 125 Hz）明显偏多，容易轰、糊——先开高通滤波，或把低频减 2–3 dB。');
+          if (relAvg(2, 3) > 5) lines.push('建议：250–500 Hz 偏高，声音容易发闷、像隔着箱子——减 2–3 dB，人声往往马上变清楚。');
+          if (rel(4) > 7) lines.push('建议：1 kHz 偏突出，容易有电话音、鼻音——人声小减 1–2 dB，或给伴奏在这一段让一点位。');
+          if (relAvg(5, 6) > 6) lines.push('建议：2–4 kHz 偏亮、偏刺——减 2–3 dB；这一带也最容易啸叫，推的时候要格外小心。');
+          else if (rel(6) > 7) lines.push('建议：4 kHz 偏突出，咬字边缘发硬——在 4 kHz 轻减 2 dB 左右。');
+          if (rel(7) > 7) lines.push('建议：8 kHz 偏高，齿音（嘶嘶声）可能刺耳——在 6–8 kHz 轻切 2–3 dB，别切过头，人声会发暗。');
+          if (relAvg(7, 8) < -8) lines.push('建议：高频偏少，声音可能发暗、缺空气感——可稍提 8 kHz 1–2 dB 试试；提之前先确认不是话筒离嘴太远或音箱高音的问题。');
+          if (!lines.length) lines.push('各频段比较均衡，暂时不用动 EQ——建议保持现状，多听一会儿再判断。');
+          liveSetAdvice(lines.slice(0, 4));
+        }
+
+        function liveLoop() {
+          if (!liveOn || !liveAnalyser || !liveCtx) return;
+          liveRaf = requestAnimationFrame(liveLoop);
+          liveFrame++;
+          var W = liveCanvas.width, H = liveCanvas.height;
+          var now = performance.now();
+
+          /* --- per-band levels + narrow-peak hunting --- */
+          var nBins = liveAnalyser.frequencyBinCount;
+          var fdata = new Float32Array(nBins);
+          liveAnalyser.getFloatFrequencyData(fdata);
+          var nyq = liveCtx.sampleRate / 2;
+          function binDb(f) {
+            var bin = Math.floor(f / nyq * nBins);
+            if (bin < 0) bin = 0; if (bin > nBins - 1) bin = nBins - 1;
+            var v = fdata[bin];
+            return isFinite(v) ? v : -100;
+          }
+          var bandDb = [], peakDb = [], peakF = [];
+          BANDS.forEach(function (b, i) {
+            var lo = b.f / 1.26, hi = b.f * 1.26;
+            var b0 = Math.max(1, Math.floor(lo / nyq * nBins)), b1 = Math.min(nBins - 1, Math.ceil(hi / nyq * nBins));
+            var acc = 0, cnt = 0, pk = -Infinity, pkF = b.f;
+            for (var k = b0; k <= b1; k++) {
+              var v = fdata[k];
+              if (!isFinite(v)) v = -100;
+              acc += v; cnt++;
+              if (v > pk) { pk = v; pkF = k / nBins * nyq; }
+            }
+            bandDb.push(cnt ? acc / cnt : -100);
+            peakDb.push(pk); peakF.push(pkF);
+          });
+          if (!liveSmooth) liveSmooth = bandDb.slice();
+          else for (var si = 0; si < BANDS.length; si++) liveSmooth[si] += (bandDb[si] - liveSmooth[si]) * 0.08;
+
+          /* A band counts as feedback only when a narrow peak inside it
+             towers over BOTH neighbouring bands (>=10 dB, or >=7 dB to
+             keep an already-confirmed ring) with the peak concentrated
+             (>=5 dB above its own band average), loud enough to matter
+             (peak > -50 dBFS), and it stays there for ~1 second.
+             Speech/music transients fail at least one of these. */
+          var best = -1, bestProm = 0;
+          BANDS.forEach(function (b, i) {
+            var neigh;
+            if (i === 0) neigh = bandDb[1];
+            else if (i === BANDS.length - 1) neigh = bandDb[BANDS.length - 2];
+            else neigh = (bandDb[i - 1] + bandDb[i + 1]) / 2;
+            var prom = peakDb[i] - neigh;
+            var narrow = peakDb[i] - bandDb[i];
+            var need = (i === liveFb) ? 7 : 10;
+            if (peakDb[i] > -50 && prom >= need && narrow >= 5 && prom > bestProm) { best = i; bestProm = prom; }
+          });
+          if (best >= 0) {
+            if (best === liveCand) {
+              if (liveFb !== best && now - liveCandSince >= 1000) {
+                liveFb = best;
+                showLiveAlert(best, peakF[best]);
+              }
+            } else { liveCand = best; liveCandSince = now; }
+            if (best === liveFb) liveFbLastSeen = now;
+          } else {
+            liveCand = -1;
+          }
+          if (liveFb >= 0 && now - liveFbLastSeen > 1500) {
+            liveFb = -1;
+            var al = $('live-alert');
+            al.className = 'feedback no'; al.innerHTML = '';
+          }
+
+          /* --- meters + axis highlight --- */
+          if (liveFrame % 3 === 0) {
+            BANDS.forEach(function (b, i) {
+              var cell = $('lm-' + i);
+              if (!cell) return;
+              var pct = (liveSmooth[i] + 80) / 50 * 100;
+              if (pct < 0) pct = 0; if (pct > 100) pct = 100;
+              cell.querySelector('.bar i').style.width = pct + '%';
+              cell.querySelector('.db').textContent = Math.round(liveSmooth[i]) + ' dB';
+              cell.classList.toggle('hot', i === liveFb);
+            });
+            var kids = $('live-axis').children;
+            for (var ai = 0; ai < kids.length; ai++) {
+              kids[ai].classList.toggle('hot', liveFb >= 0 && Number(kids[ai].dataset.f) === BANDS[liveFb].f);
+            }
+          }
+          if (now - liveLastAdvice > 800) { liveLastAdvice = now; liveAdviceUpdate(); }
+
+          /* --- spectrum drawing (same look as the training RTA) --- */
+          liveCtx2d.clearRect(0, 0, W, H);
+          var lineCol = getComputedStyle(document.documentElement).getPropertyValue('--screen-line');
+          var barColor = getComputedStyle(document.documentElement).getPropertyValue('--screen-bar').trim() || '#e8a33d';
+          liveCtx2d.strokeStyle = lineCol;
+          liveCtx2d.beginPath();
+          for (var gy = 1; gy < 4; gy++) { liveCtx2d.moveTo(0, H * gy / 4); liveCtx2d.lineTo(W, H * gy / 4); }
+          BANDS.forEach(function (b) { var gx = freqX(b.f, W); liveCtx2d.moveTo(gx, 0); liveCtx2d.lineTo(gx, H); });
+          liveCtx2d.stroke();
+          var hlF = liveFb >= 0 ? BANDS[liveFb].f : (liveCand >= 0 ? BANDS[liveCand].f : null);
+          if (hlF) {
+            var hx = freqX(hlF, W);
+            liveCtx2d.fillStyle = liveFb >= 0 ? 'rgba(239,125,117,.20)' : 'rgba(232,163,61,.14)';
+            liveCtx2d.fillRect(hx - W * 0.045, 0, W * 0.09, H);
+            liveCtx2d.strokeStyle = liveFb >= 0 ? 'rgba(239,125,117,.7)' : 'rgba(232,163,61,.55)';
+            liveCtx2d.beginPath(); liveCtx2d.moveTo(hx, 0); liveCtx2d.lineTo(hx, H); liveCtx2d.stroke();
+          }
+          var data = new Uint8Array(nBins);
+          liveAnalyser.getByteFrequencyData(data);
+          var bars = 48, bw2 = W / bars;
+          liveCtx2d.fillStyle = barColor;
+          for (var j = 0; j < bars; j++) {
+            var freq = 20 * Math.pow(1000, j / bars);
+            var v = data[Math.min(Math.floor(freq / nyq * nBins), data.length - 1)] / 255;
+            var h = Math.max(2, v * (H - 10));
+            liveCtx2d.fillRect(j * bw2 + 1.5, H - h, bw2 - 3, h);
+          }
+        }
+
         /* ============ band grid ============ */
         function activeIdxList() { return DIFFS[diffKey].idx; }
 
@@ -1873,6 +2218,7 @@
         /* ============ mode / controls ============ */
         function setMode(m) {
           if (mode === 'feedback' && m !== 'feedback' && fbBandIdx >= 0) stopFeedback(true);
+          if (mode === 'live' && m !== 'live') stopLive(true);
           mode = m;
           $('tab-quiz').setAttribute('aria-selected', m === 'quiz' ? 'true' : 'false');
           $('tab-ref').setAttribute('aria-selected', m === 'ref' ? 'true' : 'false');
@@ -1880,13 +2226,15 @@
           $('tab-solo').setAttribute('aria-selected', m === 'solo' ? 'true' : 'false');
           $('tab-fb').setAttribute('aria-selected', m === 'feedback' ? 'true' : 'false');
           $('tab-manual').setAttribute('aria-selected', m === 'manual' ? 'true' : 'false');
+          $('tab-live').setAttribute('aria-selected', m === 'live' ? 'true' : 'false');
           $('field-diff').classList.toggle('hidden', m !== 'quiz');
           $('field-refdir').classList.toggle('hidden', m !== 'ref');
           $('scorebar').classList.toggle('hidden', m !== 'quiz');
           $('panel-ex').classList.toggle('hidden', m !== 'ex');
           $('panel-fb').classList.toggle('hidden', m !== 'feedback');
           $('panel-manual').classList.toggle('hidden', m !== 'manual');
-          $('panel-bands').classList.toggle('hidden', m === 'ex' || m === 'manual');
+          $('panel-live').classList.toggle('hidden', m !== 'live');
+          $('panel-bands').classList.toggle('hidden', m === 'ex' || m === 'manual' || m === 'live');
           if (m === 'ex') $('summary').classList.remove('show');
           $('bands-title').querySelector('span').textContent =
             m === 'quiz' ? '被动了哪个频段？点一个'
@@ -1937,6 +2285,15 @@
             elStatus.textContent = playing
               ? '正在播放。推任意推子，声音和上方频谱的曲线都会立刻变。'
               : '选好音源点「播放」，然后推推子——声音立刻变。曲线画在上方频谱里。';
+          } else if (m === 'live') {
+            quiz = null;
+            abOriginal = false;
+            updateAB();
+            btnAB.disabled = true;
+            // The phone must stay silent in this mode: stop any source
+            // playback so the speaker cannot feed the microphone.
+            if (playing) stopPlayback();
+            elStatus.textContent = '现场监听：点下方「开始监听」，用手机麦克风听现场。这里只给建议，不出声、不改任何设置。';
           } else if (m === 'ref') {
             quiz = null;
             elStatus.textContent = refIdx >= 0 ? elStatus.textContent : '点任意频段开始听。先从 250 Hz、2 kHz、8 kHz 这几个现场最常用的听起。';
@@ -1972,6 +2329,15 @@
         $('tab-solo').addEventListener('click', function () { setMode('solo'); });
         $('tab-fb').addEventListener('click', function () { setMode('feedback'); });
         $('tab-manual').addEventListener('click', function () { setMode('manual'); });
+        $('tab-live').addEventListener('click', function () { setMode('live'); });
+
+        /* ---- live mic monitor controls ---- */
+        $('btn-live-start').addEventListener('click', liveStart);
+        $('btn-live-stop').addEventListener('click', function () { stopLive(false); });
+        // Leaving the page (or switching it to the background) must never
+        // leave the microphone running.
+        document.addEventListener('visibilitychange', function () { if (document.hidden) stopLive(true); });
+        window.addEventListener('pagehide', function () { stopLive(true); });
 
         /* ---- feedback mode controls ---- */
         $('seg-fbmode').addEventListener('click', function (e) {
@@ -2102,6 +2468,7 @@
         });
 
         btnPlay.addEventListener('click', function () {
+          if (mode === 'live') { elStatus.textContent = '现场监听模式下不播放音源——手机外放会干扰监听、还可能自己引起啸叫。要练听力，先切到其他模式。'; return; }
           if (loadPending) { stopPlayback(); elStatus.textContent = '已取消载入。点「播放」可以再试，或先换合成乐句 / 粉红噪声（不用联网）。'; return; }
           if (playing) { stopPlayback(); elStatus.textContent = '已停止。'; }
           else {
@@ -2141,6 +2508,7 @@
 
         /* ============ init ============ */
         buildFaders();
+        buildLiveUI();
         renderBands();
         updateScore();
         btnNew.classList.remove('hidden');
