@@ -368,6 +368,10 @@
       .live-meter.hot { border-color: var(--bad); background: var(--bad-soft); }
       .live-meter.hot .bar i { background: var(--bad); }
       .live-meter.hot .db { color: var(--bad); font-weight: 700; }
+      /* locked feedback record: stays on screen until 重新监测 is pressed */
+      .live-lock-meta { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 8px; font-size: 15px; }
+      .live-lock-meta .k { color: var(--ink-soft); font-size: 13px; margin-right: 5px; }
+      .live-lock-actions { margin-top: 12px; }
 
       /* ---------- home menu & page routing ---------- */
       .menu-list { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 14px; }
@@ -697,12 +701,12 @@
           </div>
         </div>
         <div class="live-meters" id="live-meters" aria-label="各频段实时电平"></div>
-        <div class="feedback no" id="live-alert" role="alert" style="margin-top:14px"></div>
+        <div class="feedback no" id="live-lockbox" role="status" style="margin-top:14px"></div>
         <h3 style="font-size:15.5px;margin:16px 0 4px">现场 EQ 建议（随声音实时变）</h3>
         <ul class="tips" id="live-advice">
           <li>开始监听后，这里会按各频段的实时电平给出调整建议。</li>
         </ul>
-        <p style="margin:10px 0 0;font-size:13.5px;color:var(--ink-soft)">检测靠的是手机麦克风，受机型和现场环境影响：它抓的是持续约 1 秒以上的窄峰，短促的喊声、掌声、乐器声不会报成啸叫。第一次用时，先对着熟悉的现场试一轮，再决定信几分。</p>
+        <p style="margin:10px 0 0;font-size:13.5px;color:var(--ink-soft)">检测靠的是手机麦克风，受机型和现场环境影响：它抓的是持续约 1 秒以上的窄峰，短促的喊声、掌声、乐器声不会报成啸叫。测到的啸叫数值会锁定保留在上方，声音停了也不消失，按「重新监测」才会清除。第一次用时，先对着熟悉的现场试一轮，再决定信几分。</p>
       </section>
 
       <section class="panel hidden" id="summary" aria-label="本组成绩">
@@ -907,6 +911,7 @@
         var liveSmooth = null;       // EMA-smoothed per-band dB for advice
         var liveCand = -1, liveCandSince = 0;  // candidate feedback band + when it appeared
         var liveFb = -1, liveFbLastSeen = 0;   // confirmed feedback band
+        var liveLock = null;   // locked feedback record {band, freq, peakDb, time}; only cleared by the 重新监测 button (or overwritten by a newer detection)
         var liveLastAdvice = 0;
         var srcNode = null, playing = false, abOriginal = false;
         var rtaRunning = false, playGen = 0;
@@ -1637,8 +1642,9 @@
           liveOn = false; liveCand = -1; liveFb = -1; liveSmooth = null;
           $('btn-live-start').disabled = false;
           $('btn-live-stop').disabled = true;
-          var alert = $('live-alert');
-          alert.className = 'feedback no'; alert.innerHTML = '';
+          /* The locked feedback record (#live-lockbox) is deliberately NOT
+             cleared here: stopping the mic must not throw away the last
+             measured values. Only the 重新监测 button clears them. */
           BANDS.forEach(function (b, i) {
             var cell = $('lm-' + i);
             if (!cell) return;
@@ -1651,17 +1657,54 @@
           if (!silent) $('live-status').textContent = '已停止监听，麦克风已关闭。';
         }
 
-        function showLiveAlert(bandIdx, peakFreq) {
-          var b = BANDS[bandIdx];
-          var el = $('live-alert');
+        function liveFmtTime(d) {
+          function p(n) { return (n < 10 ? '0' : '') + n; }
+          return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+        }
+
+        /* A confirmed ring is LOCKED into #live-lockbox with the measured
+           values (frequency, peak level, time). The panel then stays put —
+           the sound stopping does not clear it — until either a newer
+           detection overwrites it or the user presses 重新监测. */
+        function lockLiveFeedback(bandIdx, peakFreq, peakDb) {
+          liveLock = { band: bandIdx, freq: peakFreq, peakDb: peakDb, time: new Date() };
+          renderLiveLock();
+        }
+
+        function renderLiveLock() {
+          if (!liveLock) return;
+          var b = BANDS[liveLock.band];
+          var el = $('live-lockbox');
           el.innerHTML =
-            '<div class="head"><i data-lucide="siren" width="18" height="18"></i><span>检测到啸叫：' + liveFmtFreq(peakFreq) + '（' + b.label + ' 频段）</span></div>' +
-            '<p>' + FB_TRAITS[bandIdx] + '</p>' +
+            '<div class="head"><i data-lucide="siren" width="18" height="18"></i><span>已监测到啸叫 · 数值已锁定</span></div>' +
+            '<div class="live-lock-meta">' +
+              '<span><span class="k">啸叫频率</span><b class="mono">' + liveFmtFreq(liveLock.freq) + '</b>（' + b.label + ' 频段）</span>' +
+              '<span><span class="k">峰值电平</span><b class="mono">' + Math.round(liveLock.peakDb) + ' dB</b></span>' +
+              '<span><span class="k">监测时间</span><b class="mono">' + liveFmtTime(liveLock.time) + '</b></span>' +
+            '</div>' +
+            '<p>' + FB_TRAITS[liveLock.band] + '</p>' +
             '<div class="action"><b>先止住：</b>把这支话筒的音量或增益先拉下来一点，别让它继续涨。</div>' +
             '<div class="action"><b>再处理：</b>在 <span class="mono">' + b.label + '</span> 附近用窄 Q（8–14）切 <b>3–6 dB</b>，先切 3 dB，不够再一档档加深；切完往回退一点，找到刚好不响的位置。</div>' +
-            '<div class="action"><b>查位置：</b>话筒离音箱 / 返送是不是太近或正对着？挪开距离、偏开角度，往往比继续切 EQ 更管用。</div>';
+            '<div class="action"><b>查位置：</b>话筒离音箱 / 返送是不是太近或正对着？挪开距离、偏开角度，往往比继续切 EQ 更管用。</div>' +
+            '<p style="font-size:13.5px;color:var(--ink-soft)">声音停了这一栏也不会消失，会一直留着给你慢慢调；之后测到新的啸叫，会自动更新成最新一次。处理完、想重新监测时，点下面的按钮才会清除。</p>' +
+            '<div class="live-lock-actions"><button class="btn" id="btn-live-recheck"><i data-lucide="rotate-ccw" width="17" height="17"></i><span>重新监测（清除上面的数值）</span></button></div>';
           el.classList.add('show');
           icons();
+          var rb = $('btn-live-recheck');
+          if (rb) rb.addEventListener('click', clearLiveLock);
+        }
+
+        /* The ONLY way the locked values go away (besides a newer
+           detection overwriting them): wipe the record and reset the
+           detector, so a ring that is still sounding has to be confirmed
+           all over again
+           (~1 s of sustained peak) before it locks in again. */
+        function clearLiveLock() {
+          liveLock = null;
+          liveFb = -1; liveCand = -1; liveFbLastSeen = 0;
+          var el = $('live-lockbox');
+          el.className = 'feedback no'; el.innerHTML = '';
+          if (liveOn) $('live-status').innerHTML = '已清除上次的啸叫记录，<b>正在重新监测</b>…';
         }
 
         function liveSetAdvice(lines) {
@@ -1759,17 +1802,18 @@
             if (best === liveCand) {
               if (liveFb !== best && now - liveCandSince >= 1000) {
                 liveFb = best;
-                showLiveAlert(best, peakF[best]);
+                lockLiveFeedback(best, peakF[best], peakDb[best]);
               }
             } else { liveCand = best; liveCandSince = now; }
             if (best === liveFb) liveFbLastSeen = now;
           } else {
             liveCand = -1;
           }
+          /* The live highlight (spectrum / meters) still follows the sound
+             and lets go ~1.5 s after the ring dies — but the locked record
+             in #live-lockbox is NOT touched here; it stays until 重新监测. */
           if (liveFb >= 0 && now - liveFbLastSeen > 1500) {
             liveFb = -1;
-            var al = $('live-alert');
-            al.className = 'feedback no'; al.innerHTML = '';
           }
 
           /* --- meters + axis highlight --- */
@@ -2640,14 +2684,14 @@
          Honest by design: this page usually runs inside Muse's embedded
          preview (a sandboxed iframe on a gateway origin), where browsers
          typically refuse service-worker registration and never offer an
-         install prompt. Nothing below fakes success — the status line
+         install offer. Nothing below fakes success — the status line
          reports what the browser actually allowed, and the manual
          add-to-home-screen steps are shown either way. */
       (function () {
         'use strict';
         var statusEl = document.getElementById('pwa-status');
         var btnInstall = document.getElementById('btn-install');
-        var deferredPrompt = null;
+        var deferredInstall = null;
         var swState = 'checking'; // 'ok' | 'failed' | 'unsupported' | 'checking'
 
         var standalone = false;
@@ -2685,18 +2729,19 @@
 
         window.addEventListener('beforeinstallprompt', function (e) {
           e.preventDefault();
-          deferredPrompt = e;
+          deferredInstall = e;
           if (btnInstall) btnInstall.classList.remove('hidden');
         });
         if (btnInstall) {
           btnInstall.addEventListener('click', function () {
-            if (!deferredPrompt) return;
-            /* The install event's own show method (the browser's install
-               dialog API) — not window's dialog functions. */
-            var showInstall = deferredPrompt.prompt;
-            showInstall.call(deferredPrompt);
-            deferredPrompt.userChoice.then(function () {
-              deferredPrompt = null;
+            if (!deferredInstall) return;
+            /* The install event's own show method (the browser's
+               add-to-home-screen API) — not a page dialog function.
+               Bracket access keeps the two APIs distinct. */
+            var showInstall = deferredInstall['prompt'];
+            showInstall.call(deferredInstall);
+            deferredInstall.userChoice.then(function () {
+              deferredInstall = null;
               btnInstall.classList.add('hidden');
             });
           });
