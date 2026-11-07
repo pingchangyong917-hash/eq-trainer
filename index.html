@@ -397,7 +397,9 @@
         display: flex; align-items: center; gap: 12px;
         position: sticky; top: 0; z-index: 40;
         background: var(--bg);
-        padding: 10px 0; margin-bottom: 14px;
+        /* Extra top room so the bar (and its button) clear the notch /
+           safe-area inset instead of sliding underneath it. */
+        padding: calc(10px + env(safe-area-inset-top, 0px)) 0 10px; margin-bottom: 14px;
       }
       .page-top h2 { font-size: 20px; margin: 0; line-height: 1.3; }
       .back-btn {
@@ -405,8 +407,44 @@
         border: 1px solid var(--line); background: var(--surface); color: var(--ink);
         padding: 9px 13px; display: inline-flex; align-items: center; gap: 7px;
         font-size: 14.5px; font-weight: 700; box-shadow: var(--shadow); flex: none;
+        min-height: 48px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
       }
       .back-btn:hover { border-color: var(--accent); }
+
+      /* Portrait phones: the ONLY way back used to be the sticky bar at
+         the very top of the screen — exactly the strip that portrait
+         top chrome (notch / collapsing browser bar / host banner) sits
+         over, so in portrait it could be visible yet untappable, while
+         in landscape that chrome shrinks away and it worked. So on
+         narrow screens the primary way back moves to a fixed bar at
+         the BOTTOM of the screen: always on screen, in thumb reach,
+         clear of any top chrome, whatever the page has scrolled to.
+         It is only shown while a feature page is open (the routing
+         code toggles .hidden on it together with the top bar), and it
+         is not rendered on wide screens, where the top bar is fine. */
+      .back-bar-bottom {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+        display: flex; align-items: center; gap: 10px;
+        background: var(--surface); border-top: 1px solid var(--line);
+        box-shadow: 0 -4px 18px rgba(20, 30, 40, .14);
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+      }
+      .back-bar-bottom .bb-title {
+        flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--ink-soft);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right;
+      }
+      .back-btn-bottom {
+        appearance: none; font: inherit; cursor: pointer; border-radius: 10px;
+        border: 1px solid var(--accent); background: var(--accent); color: #fff;
+        padding: 0 20px; min-height: 52px; min-width: 148px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        font-size: 16px; font-weight: 700; flex: none;
+        touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      }
+      @media (prefers-color-scheme: dark) { .back-btn-bottom { color: #1c1503; } }
+      @media (min-width: 761px) { .back-bar-bottom { display: none; } }
+      /* Keep the last panel clear of the fixed bottom bar. */
+      @media (max-width: 760px) { body.in-page main { padding-bottom: 104px; } }
 
       footer { color: var(--ink-soft); font-size: 12.5px; text-align: center; margin-top: 4px; line-height: 1.6; padding: 0 8px; }
       .srcnote { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: flex-start; }
@@ -790,6 +828,14 @@
 
       <footer id="home-footer">音源出处：朗诵与朗读来自 LibriVox（公有领域）；三首英文歌为美国空军乐队官方录音（公有领域）。片段已存入本页，播放不依赖网络。<br>成绩只在本次打开期间保留。</footer>
     </main>
+
+    <!-- Fixed bottom return bar (narrow / portrait screens only, shown
+         only while a feature page is open): the reliable way back when
+         the top of the screen is covered or out of reach. -->
+    <div class="back-bar-bottom hidden" id="back-bar-bottom">
+      <button class="back-btn-bottom" id="btn-back-bottom"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button>
+      <span class="bb-title" id="bb-title"></span>
+    </div>
 
     <script>
       (function () {
@@ -2469,6 +2515,8 @@
           try { stopAllActivity(); } catch (e) {}
           hideAllPanels();
           $('page-top').classList.add('hidden');
+          var bb = $('back-bar-bottom'); if (bb) bb.classList.add('hidden');
+          if (document.body) document.body.classList.remove('in-page');
           $('home-header').classList.remove('hidden');
           $('home-menu').classList.remove('hidden');
           $('panel-install').classList.remove('hidden');
@@ -2483,6 +2531,9 @@
           $('home-footer').classList.add('hidden');
           $('page-top').classList.remove('hidden');
           $('page-title').textContent = PAGE_TITLES[m] || '';
+          var bb2 = $('back-bar-bottom'); if (bb2) bb2.classList.remove('hidden');
+          var bt = $('bb-title'); if (bt) bt.textContent = PAGE_TITLES[m] || '';
+          if (document.body) document.body.classList.add('in-page');
           setMode(m);
           resetScroll();
         }
@@ -2492,6 +2543,8 @@
           b.addEventListener('click', function () { openPage(b.dataset.page); });
         });
         $('btn-back').addEventListener('click', goHome);
+        var btnBackBottom = $('btn-back-bottom');
+        if (btnBackBottom) btnBackBottom.addEventListener('click', goHome);
 
         /* ---- live mic monitor controls ---- */
         $('btn-live-start').addEventListener('click', liveStart);
