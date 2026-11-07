@@ -384,7 +384,17 @@
       .menu-item .mi-t { display: block; font-weight: 700; font-size: 16px; }
       .menu-item .mi-d { display: block; color: var(--ink-soft); font-size: 13px; margin-top: 1px; line-height: 1.45; }
       .menu-item .mi-arrow { flex: none; color: var(--ink-soft); display: flex; }
-      .page-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+      /* Sticky on purpose: the feature pages are long, so a back bar that
+         scrolls away with the page leaves the reader hunting for it (and
+         on iOS a tap can land on the scrolled-under bar instead). Pinned
+         to the viewport top with the page background painted behind it,
+         返回主页 stays visible and tappable the whole time. */
+      .page-top {
+        display: flex; align-items: center; gap: 12px;
+        position: sticky; top: 0; z-index: 40;
+        background: var(--bg);
+        padding: 10px 0; margin-bottom: 14px;
+      }
       .page-top h2 { font-size: 20px; margin: 0; line-height: 1.3; }
       .back-btn {
         appearance: none; font: inherit; cursor: pointer; border-radius: 9px;
@@ -2388,18 +2398,41 @@
           });
           $('summary').classList.remove('show');
         }
+        /* Reset the scroll position for a page switch. A single
+           window.scrollTo in the same frame as the show/hide swap is
+           not reliable on iOS Safari: it can be dropped or applied
+           before the layout shrinks, which leaves the new page sitting
+           at the old page's scroll offset — content shows only after
+           dragging, and taps land offset from what is on screen
+           ("看得见但按不了"). Re-apply on the next frames and once
+           shortly after, writing both scroll roots, so the new page
+           always starts at its real top with taps aligned. */
+        function resetScroll() {
+          var apply = function () {
+            try { window.scrollTo(0, 0); } catch (e) {}
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+          };
+          apply();
+          if (window.requestAnimationFrame) {
+            requestAnimationFrame(function () { apply(); requestAnimationFrame(apply); });
+          }
+          setTimeout(apply, 80);
+        }
         function goHome() {
-          stopAllActivity();
+          // Navigation must never be hostage to an audio-stop quirk:
+          // whatever stopping the sound does, the page switch happens.
+          try { stopAllActivity(); } catch (e) {}
           hideAllPanels();
           $('page-top').classList.add('hidden');
           $('home-header').classList.remove('hidden');
           $('home-menu').classList.remove('hidden');
           $('panel-install').classList.remove('hidden');
           $('home-footer').classList.remove('hidden');
-          window.scrollTo(0, 0);
+          resetScroll();
         }
         function openPage(m) {
-          stopAllActivity();
+          try { stopAllActivity(); } catch (e) {}
           $('home-header').classList.add('hidden');
           $('home-menu').classList.add('hidden');
           $('panel-install').classList.add('hidden');
@@ -2407,7 +2440,7 @@
           $('page-top').classList.remove('hidden');
           $('page-title').textContent = PAGE_TITLES[m] || '';
           setMode(m);
-          window.scrollTo(0, 0);
+          resetScroll();
         }
 
         /* ============ events ============ */
