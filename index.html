@@ -148,6 +148,23 @@
       .axis span.last { transform: translateX(-88%); }
       .axis span.on { color: var(--screen-bar); font-weight: 700; }
       .axis span.on::before { background: var(--screen-bar); }
+      /* Fine (1/3-octave) ticks on the training RTA: all ticks exist, but
+         only octave labels are shown — a fine tick's label appears when
+         that step is the highlighted band, same trick as the live axis. */
+      #rta-axis span.fine { visibility: hidden; }
+      #rta-axis span.fine.on { visibility: visible; }
+
+      /* ---------- level (difficulty) selector ---------- */
+      .level-bar {
+        display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: 14px; box-shadow: var(--shadow);
+        padding: 10px 14px; margin-bottom: 14px;
+      }
+      .level-bar .lb-label { font-weight: 700; font-size: 14.5px; }
+      .level-bar .lb-note { font-size: 13px; color: var(--ink-soft); flex: 1 1 200px; line-height: 1.5; }
+      .zone .z-fine { display: block; margin-top: 8px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; }
+      .zone .z-fine b { color: var(--accent-strong); font-weight: 600; }
       .screen .cap {
         display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
         color: #8e8e93; font-size: 12px; padding: 4px 2px 6px;
@@ -468,12 +485,23 @@
     <main>
       <header id="home-header">
         <h1>调音台 EQ 训练 <span class="thin">· 听频段</span></h1>
-        <p>系统随机提升或衰减一个频段，你来听出是哪个频率。先在参考练习里听熟每个频段的声音性格，再进盲听测试练判断。</p>
+        <p>系统随机提升或衰减一个频段，你来听出是哪个频率。先在参考练习里听熟每个频段的声音性格，再进盲听测试练判断。训练分入门、进阶、专业三级：频段从 9 档倍频程一路细化到专业图示均衡器的 1/3 倍频程 25 档，所有模式都按所选级别走。</p>
         <div class="howto">
           <i data-lucide="ear" width="18" height="18"></i>
           <div>戴耳机、音量适中。每组 10 题，听的时候随时切回原声对比。</div>
         </div>
       </header>
+
+      <section class="panel" id="panel-level" aria-label="训练级别">
+        <h2><i data-lucide="layers" width="18" height="18"></i><span>训练级别 · 一级一级往上练</span></h2>
+        <div class="seg" id="seg-level-home" role="group" aria-label="训练级别">
+          <button data-level="begin" aria-pressed="true">入门 · 9 档</button>
+          <button data-level="mid" aria-pressed="false">进阶 · 16 档</button>
+          <button data-level="pro" aria-pressed="false">专业 · 25 档</button>
+        </div>
+        <p id="level-desc-home" style="margin:12px 0 0;font-size:14.5px"></p>
+        <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink-soft)">所有训练模式都按这个级别走：盲听测试、参考练习、单频段聆听、手动调 EQ 的推子数量、找啸叫的出题范围。现场监听的检测始终按专业 25 档报频率，不随级别降低精度。级别选好后进哪个模式都保持，返回主页也不会丢。</p>
+      </section>
 
       <div class="menu-head" id="home-menu-head">
         <h2>开始练习</h2>
@@ -502,12 +530,12 @@
         </button>
         <button class="menu-item" data-page="feedback">
           <span class="mi-icon"><i data-lucide="siren" width="22" height="22"></i></span>
-          <span class="mi-body"><span class="mi-t">找啸叫</span><span class="mi-d">按 1/3 倍频程 25 档听出啸叫频率，再亲手窄切止啸</span></span>
+          <span class="mi-body"><span class="mi-t">找啸叫</span><span class="mi-d">按所选级别细分听出啸叫频率（专业级 25 档），再亲手窄切止啸</span></span>
           <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
         <button class="menu-item" data-page="manual">
           <span class="mi-icon"><i data-lucide="sliders-vertical" width="22" height="22"></i></span>
-          <span class="mi-body"><span class="mi-t">手动调 EQ</span><span class="mi-d">九段推子加 Q 值，边推边听声音变化</span></span>
+          <span class="mi-body"><span class="mi-t">手动调 EQ</span><span class="mi-d">推子随级别从 9 段到 25 段，加 Q 值，边推边听声音变化</span></span>
           <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
         <button class="menu-item" data-page="live">
@@ -525,6 +553,16 @@
       <div class="page-top hidden" id="page-top">
         <button class="back-btn" id="btn-back"><i data-lucide="arrow-left" width="17" height="17"></i><span>返回主页</span></button>
         <h2 id="page-title"></h2>
+      </div>
+
+      <div class="level-bar hidden" id="level-bar">
+        <span class="lb-label">训练级别</span>
+        <div class="seg" id="seg-level" role="group" aria-label="训练级别">
+          <button data-level="begin" aria-pressed="true">入门 · 9 档</button>
+          <button data-level="mid" aria-pressed="false">进阶 · 16 档</button>
+          <button data-level="pro" aria-pressed="false">专业 · 25 档</button>
+        </div>
+        <span class="lb-note" id="level-note"></span>
       </div>
 
       <section class="panel hidden" id="panel-play" aria-label="播放与设置">
@@ -545,14 +583,6 @@
             </div>
             <p class="srcnote" id="source-note"><i data-lucide="audio-lines" width="16" height="16"></i><span id="source-note-text"><b>朗诵《出塞》</b> · 重点听 250 Hz 浑浊、1–2 kHz 主体、4 kHz 咬字。</span></p>
 
-          </div>
-          <div class="field" id="field-diff">
-            <label>难度</label>
-            <div class="seg" id="seg-diff">
-              <button data-diff="easy" aria-pressed="false">入门 · 5 段</button>
-              <button data-diff="std" aria-pressed="true">标准 · 9 段</button>
-              <button data-diff="hard" aria-pressed="false">进阶 · 幅度更小</button>
-            </div>
           </div>
           <div class="field hidden" id="field-refdir">
             <label>参考方向</label>
@@ -601,7 +631,7 @@
               <li>低频只剩稳重，没有「嗡嗡」压着字的轰声</li>
             </ul>
             <div class="lbl">往这个方向调（典范用的设置）</div>
-            <div class="recipe"><span class="mono">高通 75 Hz</span><span class="mono">260 Hz −3.5 dB 去浑浊</span><span class="mono">2.8 kHz +2.5 dB 提临场</span><span class="mono">8 kHz 搁架 +1.5 dB 加空气</span></div>
+            <div class="recipe"><span class="mono">高通 75 Hz</span><span class="mono">250 Hz −3.5 dB 去浑浊</span><span class="mono">2.5 kHz +2.5 dB 提临场</span><span class="mono">8 kHz 搁架 +1.5 dB 加空气</span></div>
             <div class="row"><button class="btn primary ex-play"><i data-lucide="play" width="16" height="16"></i><span>听典范</span></button></div>
           </article>
           <article class="ex-card" data-ex="sing">
@@ -614,7 +644,7 @@
               <li>一句歌词的起伏和咬字能跟得住，停顿处干净、没有底噪</li>
             </ul>
             <div class="lbl">往这个方向调（典范用的设置）</div>
-            <div class="recipe"><span class="mono">高通 60 Hz</span><span class="mono">320 Hz −2.5 dB 去闷</span><span class="mono">1.8 kHz +2 dB 提主体</span><span class="mono">6 kHz 搁架 −1.5 dB 压毛刺</span></div>
+            <div class="recipe"><span class="mono">高通 60 Hz</span><span class="mono">315 Hz −2.5 dB 去闷</span><span class="mono">2 kHz +2 dB 提主体</span><span class="mono">6.3 kHz 搁架 −1.5 dB 压毛刺</span></div>
             <div class="row"><button class="btn primary ex-play"><i data-lucide="play" width="16" height="16"></i><span>听典范</span></button></div>
           </article>
           <article class="ex-card" data-ex="recite">
@@ -627,7 +657,7 @@
               <li>停顿处干净，不拖着一团低频尾巴</li>
             </ul>
             <div class="lbl">往这个方向调（典范用的设置）</div>
-            <div class="recipe"><span class="mono">高通 55 Hz</span><span class="mono">120 Hz +1.5 dB 留温暖</span><span class="mono">350 Hz −2 dB 防闷</span><span class="mono">4 kHz +2 dB 保咬字</span></div>
+            <div class="recipe"><span class="mono">高通 55 Hz</span><span class="mono">125 Hz +1.5 dB 留温暖</span><span class="mono">315 Hz −2 dB 防闷</span><span class="mono">4 kHz +2 dB 保咬字</span></div>
             <div class="row"><button class="btn primary ex-play"><i data-lucide="play" width="16" height="16"></i><span>听典范</span></button></div>
           </article>
           <article class="ex-card" data-ex="music">
@@ -640,7 +670,7 @@
               <li>整体通透，没有哪一块频段鼓出来压人</li>
             </ul>
             <div class="lbl">往这个方向调（典范用的设置）</div>
-            <div class="recipe"><span class="mono">高通 30 Hz</span><span class="mono">250 Hz −2 dB 收浑浊</span><span class="mono">3 kHz +1.5 dB 提轮廓</span><span class="mono">10 kHz 搁架 +1 dB 加光泽</span></div>
+            <div class="recipe"><span class="mono">高通 30 Hz</span><span class="mono">250 Hz −2 dB 收浑浊</span><span class="mono">3.15 kHz +1.5 dB 提轮廓</span><span class="mono">10 kHz 搁架 +1 dB 加光泽</span></div>
             <div class="row"><button class="btn primary ex-play"><i data-lucide="play" width="16" height="16"></i><span>听典范</span></button></div>
           </article>
         </div>
@@ -693,7 +723,7 @@
           <span class="item">辨认答对 <b class="mono" id="fb-right">0</b></span>
           <span class="item">成功止啸 <b class="mono" id="fb-notched">0</b> 次</span>
         </div>
-        <p class="status" id="fb-status" style="margin:0 0 12px">点「开始啸叫」，啸叫会像现场一样慢慢响起来。听出大概是哪个频率，就在下方频段区点一个作答。下方频段已按 1/3 倍频程细分成 25 档（63 Hz–16 kHz），和现场 31 段图示均衡器同一套分法——现场啸叫落在 2.5 k、3.15 k 这种位置，在这里都对得上号。</p>
+        <p class="status" id="fb-status" style="margin:0 0 12px">点「开始啸叫」，啸叫会像现场一样慢慢响起来。听出大概是哪个频率，就在下方频段区点一个作答。下方频段按当前训练级别出题：入门 9 档倍频程先认大方向，进阶 16 档（250 Hz–8 kHz），专业 25 档 1/3 倍频程（63 Hz–16 kHz）——现场啸叫落在 2.5 k、3.15 k 这种位置，在专业级都对得上号。</p>
         <div class="feedback" id="fb-feedback" role="status"></div>
         <div class="notch-box hidden" id="notch-box">
           <h3>止啸操作台 · 用窄切把啸叫压下去</h3>
@@ -722,8 +752,8 @@
       </section>
 
       <section class="panel hidden" id="panel-manual" aria-label="手动调 EQ">
-        <h2><i data-lucide="sliders-vertical" width="18" height="18"></i><span>手动调 EQ · 九段推子</span></h2>
-        <p style="margin:0 0 12px;font-size:14.5px;color:var(--ink-soft)">在上方选好音源（真人录音或粉红噪声）点「播放」，然后推推子——声音立刻变，边推边听。上方频谱会实时画出当前的 EQ 曲线。</p>
+        <h2><i data-lucide="sliders-vertical" width="18" height="18"></i><span>手动调 EQ · <span id="mq-count-label">九段推子</span></span></h2>
+        <p style="margin:0 0 12px;font-size:14.5px;color:var(--ink-soft)">在上方选好音源（真人录音或粉红噪声）点「播放」，然后推推子——声音立刻变，边推边听。上方频谱会实时画出当前的 EQ 曲线。推子数量按训练级别走：入门 9 段、进阶 16 段、专业 25 段（1/3 倍频程，和图示均衡器一根推子对一档）。</p>
         <div class="mq-toolbar">
           <button class="btn" id="btn-mq-reset"><i data-lucide="rotate-ccw" width="17" height="17"></i><span>复位清零</span></button>
           <button class="btn" id="btn-mq-target" aria-pressed="false"><i data-lucide="target" width="17" height="17"></i><span>目标曲线对照</span></button>
@@ -796,36 +826,43 @@
           <button class="zone" data-band="0">
             <span class="z-head"><span class="z-name">超低频</span><span class="z-range mono">20–60 Hz</span></span>
             <span class="z-desc">轰隆声、脚步和低频噪声的家，人声基本用不到。现场人声先切掉——开高通滤掉它，省功放力气，也少啸叫。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>本区在 63 Hz 以下，训练网格从 63 Hz 起档——这一区现场靠高通处理，不设推子档。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">63 Hz</span></span>
           </button>
           <button class="zone" data-band="1">
             <span class="z-head"><span class="z-name">低频</span><span class="z-range mono">60–250 Hz</span></span>
             <span class="z-desc">声音的厚度与温暖在这里。太多会糊、发闷，还会和贝斯打架；太少声音就薄、没底。男声讲话浑，多半是这里多了。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>63、80、100、125、160、200、250 Hz 共 7 档。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">63 Hz</span><span class="chip mono">125 Hz</span><span class="chip mono">250 Hz</span></span>
           </button>
           <button class="zone" data-band="2">
             <span class="z-head"><span class="z-name">低中频 · 浑浊区</span><span class="z-range mono">250–500 Hz</span></span>
             <span class="z-desc">现场最常动的地方。人声闷、像隔着箱子，多半先查这里：先减 2–3 dB，人声往往马上变清楚。先减、别加。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>250、315、400、500 Hz 共 4 档——闷在哪一小截，就切哪一档，别整区一起减。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">250 Hz</span><span class="chip mono">500 Hz</span></span>
           </button>
           <button class="zone" data-band="4">
             <span class="z-head"><span class="z-name">中频</span><span class="z-range mono">500 Hz–2 kHz</span></span>
             <span class="z-desc">人声的体量和咬字在这里，决定词听不听得清。1 kHz 左右带一点鼻音和电话音，太多会吵，太少人声会退到乐队后面去。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>500、630、800 Hz、1、1.25、1.6、2 kHz 共 7 档。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">500 Hz</span><span class="chip mono">1 kHz</span><span class="chip mono">2 kHz</span></span>
           </button>
           <button class="zone" data-band="5">
             <span class="z-head"><span class="z-name">高中频</span><span class="z-range mono">2–4 kHz</span></span>
             <span class="z-desc">清晰度和穿透力：推一点人声就靠前、听得清。但也是最容易啸叫的区，推要小心，开始刺、开始啸就往回收。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>2、2.5、3.15、4 kHz 共 4 档——啸叫最常落在 2.5、3.15 kHz 这两档上。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">2 kHz</span><span class="chip mono">4 kHz</span></span>
           </button>
           <button class="zone" data-band="6">
             <span class="z-head"><span class="z-name">临场感</span><span class="z-range mono">4–6 kHz</span></span>
             <span class="z-desc">齿音和「嘶嘶」声的区。太多就是刺耳的嘶声，现场一般是减、不是加；歌手齿音重，先在这里轻切 2–3 dB。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>4、5 kHz 共 2 档（6.3 kHz 起归明亮度区）。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">4 kHz</span></span>
           </button>
           <button class="zone" data-band="7">
             <span class="z-head"><span class="z-name">明亮度 / 空气感</span><span class="z-range mono">6–20 kHz</span></span>
             <span class="z-desc">光泽和通透：8 kHz 推一点声音变亮，16 kHz 以上基本是空气感。现场一般不动最好，推上来多是底噪和啸叫，不是真清晰。</span>
+            <span class="z-fine"><b>1/3 倍频程细分：</b>6.3、8、10、12.5、16 kHz 共 5 档。</span>
             <span class="z-go"><i data-lucide="play" width="15" height="15"></i>点这里听这个区<span class="chip mono">8 kHz</span><span class="chip mono">16 kHz</span></span>
           </button>
         </div>
@@ -986,6 +1023,69 @@
           }
           return '你选的 <b class="mono">' + FB_BANDS[picked].label + '</b> 和实际的 <b class="mono">' + FB_BANDS[actual].label + '</b> 差了两档（2/3 倍频程），' + dirWord + '了，但已经在同一个大区里。现场就按这个方向找，再往相邻档一档一档试过去，很快能锁定。';
         }
+        /* ============ training levels: one grid for the whole app ============
+           Every training mode reads its frequencies from gridBands(),
+           which follows the selected level:
+             begin 入门 — the 9 octave bands (BANDS), quiz moves ±10 dB.
+             mid   进阶 — 16 1/3-octave steps, 250 Hz–8 kHz (the range
+                          live vocal work and feedback actually live in),
+                          quiz moves ±6 dB.
+             pro   专业 — all 25 1/3-octave steps (FB_BANDS), quiz ±4 dB.
+           Default is begin: nobody gets dropped into the fine grid
+           before they can hear the octave regions. The live monitor is
+           the one exception — its detection always reports on the full
+           25-step grid whatever the level, so field precision never
+           drops. 找啸叫 draws its ringing frequency from the level's
+           share of the fine grid (levelFbIdxList). */
+        var LEVELS = {
+          begin: { gains: [10, -10], note: '入门 · 9 档倍频程（63 Hz–16 kHz），盲听题目幅度 ±10 dB：先认大方向、认每个频段的声音性格。' },
+          mid:   { gains: [6, -6],   note: '进阶 · 16 档 1/3 倍频程（250 Hz–8 kHz），盲听题目幅度 ±6 dB：现场最常用的人声和啸叫区，细分到图示均衡器的档位。' },
+          pro:   { gains: [4, -4],   note: '专业 · 25 档 1/3 倍频程（63 Hz–16 kHz），盲听题目幅度 ±4 dB：和现场 31 段图示均衡器同一套分法，练出来直接对得上推子。' }
+        };
+        var levelKey = 'begin';
+        /* Index of the octave band (BANDS) a frequency belongs to —
+           used to give every fine step its region's description and
+           live-action advice. */
+        function regionIdxOfFreq(f) {
+          var best = 0, bd = Infinity;
+          for (var i = 0; i < BANDS.length; i++) {
+            var d = Math.abs(Math.log2(f / BANDS[i].f));
+            if (d < bd) { bd = d; best = i; }
+          }
+          return best;
+        }
+        /* The band list every training mode works on right now.
+           Entries: {f, label, name, desc, act} — act indexes BANDS /
+           BAND_ACTION for the region this step belongs to. */
+        function gridBands() {
+          if (levelKey === 'begin') {
+            return BANDS.map(function (b, i) { return { f: b.f, label: b.label, name: b.name, desc: b.desc, act: i }; });
+          }
+          var list = levelKey === 'mid' ? FB_BANDS.slice(6, 22) : FB_BANDS;
+          return list.map(function (b) {
+            var reg = regionIdxOfFreq(b.f);
+            return {
+              f: b.f, label: b.label, name: b.name, act: reg,
+              desc: BANDS[reg].desc + ' 这一档是「' + b.name + '」区里的 1/3 倍频程细分档（' + b.label + '），现场图示均衡器上就是标着 ' + b.label + ' 的那一根推子。'
+            };
+          });
+        }
+        /* Which FB_BANDS steps 找啸叫 may ring at on the current level:
+           begin = the 9 octave centres, mid = steps 6–21 (250 Hz–8 kHz),
+           pro = all 25. */
+        function levelFbIdxList() {
+          if (levelKey === 'begin') return [0, 3, 6, 9, 12, 15, 18, 21, 24];
+          if (levelKey === 'mid') { var a = []; for (var i = 6; i <= 21; i++) a.push(i); return a; }
+          return FB_BANDS.map(function (_, i) { return i; });
+        }
+        /* Frequencies the training RTA draws gridlines / axis ticks for:
+           the feedback mode follows its own (level-filtered) fine grid,
+           everything else follows gridBands(). */
+        function axisFreqs() {
+          if (mode === 'feedback') return levelFbIdxList().map(function (i) { return FB_BANDS[i].f; });
+          return gridBands().map(function (b) { return b.f; });
+        }
+
         /* Manual-EQ state: one gain and one Q step per band. Q steps are
            宽 (0.8) / 中 (1.6) / 窄 (3.2). */
         var Q_STEPS = [
@@ -993,19 +1093,28 @@
           { label: '中', q: 1.6 },
           { label: '窄', q: 3.2 }
         ];
-        var manualGains = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-        var manualQIdx = [1, 1, 1, 1, 1, 1, 1, 1, 1];
+        var manualGains = gridBands().map(function () { return 0; });
+        var manualQIdx = gridBands().map(function () { return 1; });
         var showTarget = false;
         /* Suggested live-vocal target: high-pass discipline at the bottom
            (63 Hz well down), a little mud removed at 250–500 Hz, a gentle
            presence lift at 2–4 kHz, top left nearly alone. Gains per band. */
         var TARGET_GAINS = [-9, -3, -3, -2, 0, 2, 3, 1, 0];
 
-        var DIFFS = {
-          easy: { idx: [1, 3, 4, 6, 8], gains: [10],       note: '入门：5 个频段，只做 +10 dB 提升' },
-          std:  { idx: [0, 1, 2, 3, 4, 5, 6, 7, 8], gains: [8, -8],  note: '标准：9 个频段，±8 dB' },
-          hard: { idx: [0, 1, 2, 3, 4, 5, 6, 7, 8], gains: [5, -5],  note: '进阶：9 个频段，幅度收小到 ±5 dB' }
-        };
+        /* The suggested live-vocal target gain at an arbitrary frequency:
+           log-linear interpolation between the octave anchors in
+           TARGET_GAINS, so the target curve — and 套用目标曲线 — works on
+           the 16- and 25-step grids too, not just the 9 octave faders. */
+        function targetGainAt(f) {
+          if (f <= BANDS[0].f) return TARGET_GAINS[0];
+          for (var i = 1; i < BANDS.length; i++) {
+            if (f <= BANDS[i].f) {
+              var t = Math.log2(f / BANDS[i - 1].f) / Math.log2(BANDS[i].f / BANDS[i - 1].f);
+              return TARGET_GAINS[i - 1] + (TARGET_GAINS[i] - TARGET_GAINS[i - 1]) * t;
+            }
+          }
+          return TARGET_GAINS[TARGET_GAINS.length - 1];
+        }
         var TOTAL = 10;
 
         /* ============ exemplars: what "well tuned" sounds like ============
@@ -1013,10 +1122,13 @@
            f3 is a high shelf; f1/f2 are peaking. Values match the recipe
            chips printed on each card. */
         var EXEMPLARS = {
-          speech: { src: 'udhr',       title: '清晰讲话',   hp: 75, f1: { f: 260,  q: 1.0, g: -3.5 }, f2: { f: 2800, q: 0.9, g: 2.5 },  f3: { f: 8000,  g: 1.5 } },
-          sing:   { src: 'shenandoah', title: '合唱演唱',   hp: 60, f1: { f: 320,  q: 1.0, g: -2.5 }, f2: { f: 1800, q: 0.9, g: 2 },    f3: { f: 6000,  g: -1.5 } },
-          recite: { src: 'dingfengbo', title: '温暖朗诵',   hp: 55, f1: { f: 120,  q: 0.9, g: 1.5 },  f2: { f: 350,  q: 1.0, g: -2 },   f3: { f: 4000,  g: 2 } },
-          music:  { src: 'music',      title: '平衡乐句',   hp: 30, f1: { f: 250,  q: 1.0, g: -2 },   f2: { f: 3000, q: 0.9, g: 1.5 },  f3: { f: 10000, g: 1 } }
+          /* Recipe frequencies sit on the 1/3-octave steps (250, 2.5k,
+             315, 125, 3.15k…) so what the exemplar does names the same
+             fader the fine grids train — no in-between frequencies. */
+          speech: { src: 'udhr',       title: '清晰讲话',   hp: 75, f1: { f: 250,  q: 1.0, g: -3.5 }, f2: { f: 2500, q: 0.9, g: 2.5 },  f3: { f: 8000,  g: 1.5 } },
+          sing:   { src: 'shenandoah', title: '合唱演唱',   hp: 60, f1: { f: 315,  q: 1.0, g: -2.5 }, f2: { f: 2000, q: 0.9, g: 2 },    f3: { f: 6300,  g: -1.5 } },
+          recite: { src: 'dingfengbo', title: '温暖朗诵',   hp: 55, f1: { f: 125,  q: 0.9, g: 1.5 },  f2: { f: 315,  q: 1.0, g: -2 },   f3: { f: 4000,  g: 2 } },
+          music:  { src: 'music',      title: '平衡乐句',   hp: 30, f1: { f: 250,  q: 1.0, g: -2 },   f2: { f: 3150, q: 0.9, g: 1.5 },  f3: { f: 10000, g: 1 } }
         };
         // NOTE: 'recite' uses f3 as a shelf at 4 kHz in the data above for
         // simplicity of the table, but its card promises a peaking-style
@@ -1026,7 +1138,6 @@
         /* ============ state ============ */
         var mode = 'quiz';           // 'quiz' | 'ref' | 'ex' | 'solo'
         var sourceKind = 'chusai';   // recording key, or 'music' | 'noise'
-        var diffKey = 'std';
         var refDir = 'boost';
         var refIdx = -1;             // selected band index in ref mode
         var soloIdx = -1;            // selected band index in solo mode
@@ -1112,16 +1223,18 @@
           // in solo mode it becomes a bandpass around the chosen band so
           // only that band's own sound is heard.
           soloF = ctx.createBiquadFilter(); soloF.type = 'peaking'; soloF.frequency.value = 1000; soloF.Q.value = 1; soloF.gain.value = 0;
-          // Manual-EQ chain: nine peaking filters, one per training band,
-          // sitting between the solo filter and the shared quiz EQ:
-          // soloF -> m0 -> m1 -> ... -> m8 -> eq. All gains start at 0 dB
-          // (transparent) and only move in manual mode (see applyManual).
+          // Manual-EQ chain: 25 peaking filters (the most the finest
+          // grid needs), sitting between the solo filter and the shared
+          // quiz EQ: soloF -> m0 -> m1 -> ... -> m24 -> eq. applyManual
+          // points the first N at the current level's grid frequencies
+          // and parks the rest at 0 dB (transparent); gains only move in
+          // manual mode.
           manualFilters = [];
-          for (var mi = 0; mi < BANDS.length; mi++) {
+          for (var mi = 0; mi < FB_BANDS.length; mi++) {
             var mf = ctx.createBiquadFilter();
             mf.type = 'peaking';
-            mf.frequency.value = BANDS[mi].f;
-            mf.Q.value = Q_STEPS[manualQIdx[mi]].q;
+            mf.frequency.value = FB_BANDS[mi].f;
+            mf.Q.value = Q_STEPS[1].q;
             mf.gain.value = 0;
             manualFilters.push(mf);
           }
@@ -1414,26 +1527,33 @@
         /* ============ manual EQ chain ============ */
         function applyManual() {
           if (!ctx || !manualFilters.length) return;
+          var grid = gridBands();
           var t = ctx.currentTime;
           for (var i = 0; i < manualFilters.length; i++) {
             var f = manualFilters[i];
-            f.frequency.setTargetAtTime(BANDS[i].f, t, 0.02);
-            f.Q.setTargetAtTime(Q_STEPS[manualQIdx[i]].q, t, 0.02);
-            f.gain.setTargetAtTime(mode === 'manual' ? manualGains[i] : 0, t, 0.02);
+            if (i < grid.length) {
+              f.frequency.setTargetAtTime(grid[i].f, t, 0.02);
+              f.Q.setTargetAtTime(Q_STEPS[manualQIdx[i] == null ? 1 : manualQIdx[i]].q, t, 0.02);
+              f.gain.setTargetAtTime(mode === 'manual' ? (manualGains[i] || 0) : 0, t, 0.02);
+            } else {
+              f.gain.setTargetAtTime(0, t, 0.02);
+            }
           }
         }
 
-        /* Summed EQ response in dB at frequency f, from a gains-per-band
-           array and a Q-per-band array. Each band contributes its gain
-           through a gaussian window on the log-frequency axis whose width
-           follows Q (higher Q = narrower window): close enough to a real
-           peaking filter's shape for drawing the curve and for estimating
-           how much a notch bites at a neighbouring frequency. */
-        function eqResponseDb(f, gains, qArr) {
+        /* Summed EQ response in dB at frequency f, from a frequency
+           array with a gains-per-band array and a Q-per-band array.
+           Each band contributes its gain through a gaussian window on
+           the log-frequency axis whose width follows Q (higher Q =
+           narrower window): close enough to a real peaking filter's
+           shape for drawing the curve and for estimating how much a
+           notch bites at a neighbouring frequency. Works on any grid —
+           the 9 octave bands or either 1/3-octave level. */
+        function eqResponseDb(f, freqs, gains, qArr) {
           var db = 0;
-          for (var i = 0; i < BANDS.length; i++) {
+          for (var i = 0; i < freqs.length; i++) {
             if (!gains[i]) continue;
-            var oct = Math.log2(f / BANDS[i].f);
+            var oct = Math.log2(f / freqs[i]);
             var sigma = 1.1 / Math.sqrt(qArr[i]);
             db += gains[i] * Math.exp(-(oct * oct) / (2 * sigma * sigma));
           }
@@ -1517,7 +1637,7 @@
           var t = ctx.currentTime;
           if (mode === 'solo' && soloIdx >= 0 && !abOriginal) {
             soloF.type = 'bandpass';
-            soloF.frequency.setTargetAtTime(BANDS[soloIdx].f, t, 0.03);
+            soloF.frequency.setTargetAtTime(gridBands()[soloIdx].f, t, 0.03);
             soloF.Q.setTargetAtTime(1.1, t, 0.03);
           } else {
             soloF.type = 'peaking';
@@ -1542,9 +1662,9 @@
             }
           }
           else if (!abOriginal) {
-            if (mode === 'quiz' && quiz && !quiz.answered) { targetF = BANDS[quiz.bandIdx].f; targetG = quiz.gainDb; }
-            else if (mode === 'quiz' && quiz && quiz.answered) { targetF = BANDS[quiz.bandIdx].f; targetG = quiz.gainDb; }
-            else if (mode === 'ref' && refIdx >= 0) { targetF = BANDS[refIdx].f; targetG = refDir === 'boost' ? 10 : -10; }
+            if (mode === 'quiz' && quiz && !quiz.answered) { targetF = gridBands()[quiz.bandIdx].f; targetG = quiz.gainDb; }
+            else if (mode === 'quiz' && quiz && quiz.answered) { targetF = gridBands()[quiz.bandIdx].f; targetG = quiz.gainDb; }
+            else if (mode === 'ref' && refIdx >= 0) { targetF = gridBands()[refIdx].f; targetG = refDir === 'boost' ? 10 : -10; }
           }
           var t = ctx.currentTime;
           eq.frequency.setTargetAtTime(targetF, t, 0.03);
@@ -1566,15 +1686,28 @@
 
         // Hz tick labels under the spectrum, aligned to the log frequency
         // scale and to the vertical gridlines drawn in the canvas.
+        // Rebuilt whenever the level (or the feedback mode) changes the
+        // grid: on the fine grids only the octave ticks carry a visible
+        // label — a fine tick's label appears when it is highlighted,
+        // the same treatment as the live-monitor axis.
         var axisEl = $('rta-axis');
-        BANDS.forEach(function (b, i) {
-          var s = document.createElement('span');
-          s.dataset.f = b.f;
-          if (i === BANDS.length - 1) s.className = 'last';
-          s.style.left = (freqX(b.f, 100)) + '%';
-          s.textContent = b.f >= 1000 ? (b.f / 1000) + 'k' : String(b.f);
-          axisEl.appendChild(s);
-        });
+        function buildAxis() {
+          axisEl.innerHTML = '';
+          var freqs = axisFreqs();
+          freqs.forEach(function (f, i) {
+            var s = document.createElement('span');
+            s.dataset.f = f;
+            var cls = '';
+            var isOct = BANDS.some(function (b) { return b.f === f; });
+            if (!isOct) cls = 'fine';
+            if (i === freqs.length - 1) cls = (cls ? cls + ' ' : '') + 'last';
+            if (cls) s.className = cls;
+            s.style.left = (freqX(f, 100)) + '%';
+            s.textContent = f >= 1000 ? (f / 1000) + 'k' : String(f);
+            axisEl.appendChild(s);
+          });
+          lastAxisMark = undefined;
+        }
         var lastAxisMark = undefined;
         function syncAxisMark(markF) {
           if (markF === lastAxisMark) return;
@@ -1600,15 +1733,15 @@
           var markF = null;
           window.__eqMode = mode;
           if (mode === 'feedback' && fbBandIdx >= 0 && fbAnswered) markF = FB_BANDS[fbBandIdx].f;
-          if (mode === 'ref' && refIdx >= 0) markF = BANDS[refIdx].f;
-          if (mode === 'solo' && soloIdx >= 0) markF = BANDS[soloIdx].f;
-          if (mode === 'quiz' && quiz && quiz.answered) markF = BANDS[quiz.bandIdx].f;
+          if (mode === 'ref' && refIdx >= 0) markF = gridBands()[refIdx].f;
+          if (mode === 'solo' && soloIdx >= 0) markF = gridBands()[soloIdx].f;
+          if (mode === 'quiz' && quiz && quiz.answered) markF = gridBands()[quiz.bandIdx].f;
           syncAxisMark(markF);
 
-          // vertical gridlines at each training band's frequency
+          // vertical gridlines at each of the current grid's frequencies
           rtaCtx.beginPath();
-          BANDS.forEach(function (b) {
-            var gx = freqX(b.f, W);
+          axisFreqs().forEach(function (f) {
+            var gx = freqX(f, W);
             rtaCtx.moveTo(gx, 0); rtaCtx.lineTo(gx, H);
           });
           rtaCtx.stroke();
@@ -1654,34 +1787,37 @@
         function drawEqCurve(W, H) {
           if (window.__eqMode !== 'manual') return;
           function yOf(db) { return H / 2 - (db / 15) * (H / 2 - 6); }
-          function trace(gains, qArr) {
+          function trace(freqs, gains, qArr) {
             rtaCtx.beginPath();
             for (var x = 0; x <= W; x += 6) {
               var f = 20 * Math.pow(1000, x / W);
-              var y = yOf(eqResponseDb(f, gains, qArr));
+              var y = yOf(eqResponseDb(f, freqs, gains, qArr));
               if (x === 0) rtaCtx.moveTo(x, y); else rtaCtx.lineTo(x, y);
             }
             rtaCtx.stroke();
           }
           var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (showTarget) {
+            var tFreqs = BANDS.map(function (b) { return b.f; });
             var tq = TARGET_GAINS.map(function () { return 1.4; });
             rtaCtx.save();
             rtaCtx.setLineDash([6, 5]);
             rtaCtx.lineWidth = 2;
             rtaCtx.strokeStyle = dark ? '#5fbb8f' : '#2f7d5b';
-            trace(TARGET_GAINS, tq);
+            trace(tFreqs, TARGET_GAINS, tq);
             rtaCtx.restore();
           }
-          var mq = manualQIdx.map(function (qi) { return Q_STEPS[qi].q; });
+          var grid = gridBands();
+          var gFreqs = grid.map(function (b) { return b.f; });
+          var mq = manualQIdx.map(function (qi) { return Q_STEPS[qi == null ? 1 : qi].q; });
           rtaCtx.lineWidth = 2.5;
           rtaCtx.strokeStyle = '#e8a33d';
-          trace(manualGains, mq);
+          trace(gFreqs, manualGains, mq);
           // dots at each band's own frequency, sitting on the curve
           rtaCtx.fillStyle = '#e8a33d';
-          BANDS.forEach(function (b, i) {
+          grid.forEach(function (b, i) {
             var cx = freqX(b.f, W);
-            var cy = yOf(eqResponseDb(b.f, manualGains, mq));
+            var cy = yOf(eqResponseDb(b.f, gFreqs, manualGains, mq));
             rtaCtx.beginPath();
             rtaCtx.arc(cx, cy, 3, 0, Math.PI * 2);
             rtaCtx.fill();
@@ -2032,18 +2168,19 @@
         }
 
         /* ============ band grid ============ */
-        function activeIdxList() { return DIFFS[diffKey].idx; }
-
         function renderBands() {
           elBands.innerHTML = '';
           if (mode === 'feedback') {
-            /* 找啸叫 uses its own 1/3-octave grid (FB_BANDS, 25 steps) —
-               live feedback lands between octave centres, so this mode
-               must not share the 9-band grid the other modes train on.
-               Clicks still flow through onBandClick, which routes them
-               to answerFb / selectNotchBand in this mode. */
-            elBands.className = 'bands fb25';
-            FB_BANDS.forEach(function (b, bi) {
+            /* 找啸叫 answers on the fine grid, filtered by level
+               (levelFbIdxList): 入门 shows the 9 octave centres, 进阶
+               the 16 mid steps, 专业 all 25. Button indices stay
+               FB_BANDS indices, so answerFb / the notch logic below
+               work unchanged at every level. Clicks flow through
+               onBandClick, which routes them in this mode. */
+            var fl = levelFbIdxList();
+            elBands.className = 'bands' + (fl.length > 9 ? ' fb25' : '');
+            fl.forEach(function (bi) {
+              var b = FB_BANDS[bi];
               var btn = document.createElement('button');
               btn.className = 'band';
               btn.dataset.idx = bi;
@@ -2054,15 +2191,18 @@
             if (fbSubmode === 'notch' && notchBandIdx >= 0) markSelected();
             return;
           }
-          var list = mode === 'quiz' ? activeIdxList() : BANDS.map(function (_, i) { return i; });
-          elBands.className = 'bands' + (list.length === 5 ? ' five' : '');
-          list.forEach(function (bi) {
-            var b = document.createElement('button');
-            b.className = 'band';
-            b.dataset.idx = bi;
-            b.innerHTML = '<span class="fr mono">' + BANDS[bi].label + '</span><span class="nm">' + BANDS[bi].name + '</span>';
-            b.addEventListener('click', function () { onBandClick(bi, b); });
-            elBands.appendChild(b);
+          /* Quiz, reference and solo all work on the current level's
+             grid (gridBands): 9 / 16 / 25 buttons. Indices are grid
+             indices; quiz.bandIdx, refIdx and soloIdx all follow it. */
+          var grid = gridBands();
+          elBands.className = 'bands' + (grid.length > 9 ? ' fb25' : '');
+          grid.forEach(function (b, gi) {
+            var btn = document.createElement('button');
+            btn.className = 'band';
+            btn.dataset.idx = gi;
+            btn.innerHTML = '<span class="fr mono">' + b.label + '</span><span class="nm">' + b.name + '</span>';
+            btn.addEventListener('click', function () { onBandClick(gi, btn); });
+            elBands.appendChild(btn);
           });
           if (mode === 'ref' && refIdx >= 0) markSelected();
           if (mode === 'solo' && soloIdx >= 0) markSelected();
@@ -2093,12 +2233,12 @@
           newQuestion();
         }
         function newQuestion() {
-          var list = activeIdxList();
-          var bi = list[Math.floor(Math.random() * list.length)];
-          if (quiz && bi === quiz.bandIdx && list.length > 1) {
-            bi = list[(list.indexOf(bi) + 1) % list.length];
+          var grid = gridBands();
+          var bi = Math.floor(Math.random() * grid.length);
+          if (quiz && bi === quiz.bandIdx && grid.length > 1) {
+            bi = (bi + 1) % grid.length;
           }
-          var gains = DIFFS[diffKey].gains;
+          var gains = LEVELS[levelKey].gains;
           var g = gains[Math.floor(Math.random() * gains.length)];
           quiz = { bandIdx: bi, gainDb: g, answered: false };
           round++;
@@ -2135,13 +2275,19 @@
             else if (idx === bi) kids[i].classList.add('wrong');
           }
           setBandsEnabled(false);
-          var band = BANDS[quiz.bandIdx];
+          var band = gridBands()[quiz.bandIdx];
           var dirWord = quiz.gainDb > 0 ? '提升了 +' + quiz.gainDb + ' dB' : '衰减了 ' + quiz.gainDb + ' dB';
           elFeedback.className = 'feedback show ' + (ok ? 'ok' : 'no');
-          var actionText = BAND_ACTION[quiz.bandIdx] ? (quiz.gainDb > 0 ? BAND_ACTION[quiz.bandIdx].boost : BAND_ACTION[quiz.bandIdx].cut) : '';
+          var actBand = BAND_ACTION[band.act];
+          var actionText = actBand ? (quiz.gainDb > 0 ? actBand.boost : actBand.cut) : '';
+          var nearNote = '';
+          if (!ok && levelKey !== 'begin' && Math.abs(bi - quiz.bandIdx) === 1) {
+            nearNote = '你选的档和答案只差一档（1/3 倍频程）——方向已经对了，现场就是相邻的那一根推子，再多听几遍这一对邻档的差别。';
+          }
           elFeedback.innerHTML =
             '<div class="head">' + (ok ? '<i data-lucide="check-circle-2" width="19" height="19"></i>答对了' : '<i data-lucide="x-circle" width="19" height="19"></i>差一点') + '</div>' +
             '<p>这题动的是 <b class="mono">' + band.label + '</b>（' + band.name + '），' + dirWord + '。' + band.desc + '</p>' +
+            (nearNote ? '<p class="action"><b>就差一档：</b>' + nearNote + '</p>' : '') +
             (actionText ? '<p class="action"><b>现场遇到这种情况：</b>' + actionText + '</p>' : '') +
             '<p style="color:var(--ink-soft)">声音还在继续播放，频谱上标出的就是这个频段——趁现在多听两遍，把这个声音记住。</p>';
           icons();
@@ -2164,7 +2310,7 @@
           btnNew.classList.remove('hidden');
           $('sum-score').textContent = right;
           var line;
-          if (right >= 9) line = '非常稳，这个难度已经难不住你了，可以上「进阶」把幅度收小再练。';
+          if (right >= 9) line = levelKey === 'pro' ? '非常稳，专业级 25 档也难不住你了——保持这个手感，现场就是这个精度。' : '非常稳，这个级别已经难不住你了，可以升一级：频段更细、幅度更小，接着练。';
           else if (right >= 7) line = '已经能抓住大部分频段的性格了，把下面错得多的那一两个在参考练习里单独多听几遍。';
           else if (right >= 4) line = '正在建立感觉。建议先回参考练习，把每个频段逐个听熟，再回来测。';
           else line = '很正常，频段感是练出来的，不是听出来的。先去参考练习逐个听，尤其是低频和最高频。';
@@ -2176,9 +2322,10 @@
             if (r.ok) per[r.bandIdx].ok++;
           });
           var html = '';
+          var gridNow = gridBands();
           Object.keys(per).sort(function (a, b) { return (per[a].ok / per[a].n) - (per[b].ok / per[b].n); }).forEach(function (k) {
             var p = per[k], weak = p.ok < p.n;
-            html += '<li><span><span class="mono"><b>' + BANDS[k].label + '</b></span> · ' + BANDS[k].name + '</span>' +
+            html += '<li><span><span class="mono"><b>' + gridNow[k].label + '</b></span> · ' + gridNow[k].name + '</span>' +
               '<span class="' + (weak ? 'weak' : '') + '">' + p.ok + ' / ' + p.n + ' 对</span></li>';
           });
           $('sum-perband').innerHTML = html;
@@ -2247,7 +2394,7 @@
           ensureCtx();
           var begin = function () {
             stopFeedback(true);
-            var list = FB_BANDS.map(function (_, i) { return i; });
+            var list = levelFbIdxList();
             var bi = list[Math.floor(Math.random() * list.length)];
             if (bi === fbBandIdx && fbBandIdx >= 0) bi = list[(list.indexOf(bi) + 1) % list.length];
             fbBandIdx = bi;
@@ -2412,11 +2559,11 @@
           updateNotchMeter();
         }
 
-        /* ============ manual EQ mode: nine faders, live ============ */
+        /* ============ manual EQ mode: faders follow the level grid ============ */
         function buildFaders() {
           var wrap = $('faders');
           wrap.innerHTML = '';
-          BANDS.forEach(function (b, i) {
+          gridBands().forEach(function (b, i) {
             var card = document.createElement('div');
             card.className = 'fader';
             var qBtns = '';
@@ -2468,16 +2615,16 @@
             var kids = seg.querySelectorAll('button');
             kids.forEach(function (k) { k.setAttribute('aria-pressed', Number(k.dataset.q) === manualQIdx[i] ? 'true' : 'false'); });
           });
-          for (var i = 0; i < BANDS.length; i++) syncFader(i);
+          for (var i = 0; i < manualGains.length; i++) syncFader(i);
         }
         function resetManual() {
-          manualGains = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+          manualGains = manualGains.map(function () { return 0; });
           syncAllFaders();
           applyEq();
-          elStatus.textContent = '已复位：九个推子全部清零，现在是未经调整的原声。';
+          elStatus.textContent = '已复位：' + manualGains.length + ' 个推子全部清零，现在是未经调整的原声。';
         }
         function applyTargetCurve() {
-          manualGains = TARGET_GAINS.slice();
+          manualGains = gridBands().map(function (b) { return Math.round(targetGainAt(b.f) * 2) / 2; });
           syncAllFaders();
           applyEq();
           if (!showTarget) $('btn-mq-target').click();
@@ -2490,7 +2637,7 @@
           abOriginal = false;
           updateAB();
           markSelected();
-          var band = BANDS[bi];
+          var band = gridBands()[bi];
           $('ref-fr').textContent = band.label;
           $('ref-nm').textContent = band.name + '（' + (refDir === 'boost' ? '+10 dB 提升' : '−10 dB 衰减') + '）';
           $('ref-desc').textContent = band.desc;
@@ -2506,7 +2653,7 @@
           abOriginal = false;
           updateAB();
           markSelected();
-          var band = BANDS[bi];
+          var band = gridBands()[bi];
           $('ref-fr').textContent = band.label;
           $('ref-nm').textContent = band.name + '（只放这个频段）';
           $('ref-desc').textContent = band.desc;
@@ -2549,7 +2696,6 @@
           if (mode === 'feedback' && m !== 'feedback' && fbBandIdx >= 0) stopFeedback(true);
           if (mode === 'live' && m !== 'live') stopLive(true);
           mode = m;
-          $('field-diff').classList.toggle('hidden', m !== 'quiz');
           $('field-refdir').classList.toggle('hidden', m !== 'ref');
           $('scorebar').classList.toggle('hidden', m !== 'quiz');
           $('panel-play').classList.toggle('hidden', m === 'live' || m === 'zones' || m === 'feedback');
@@ -2579,7 +2725,7 @@
             if (soloIdx >= 0) {
               // refresh the info card so it describes the solo band, not
               // whatever the reference mode last put in it
-              var sb = BANDS[soloIdx];
+              var sb = gridBands()[soloIdx];
               $('ref-fr').textContent = sb.label;
               $('ref-nm').textContent = sb.name + '（只放这个频段）';
               $('ref-desc').textContent = sb.desc;
@@ -2629,8 +2775,9 @@
             quiz = null;
             elStatus.textContent = refIdx >= 0 ? elStatus.textContent : '点任意频段开始听。先从 250 Hz、2 kHz、8 kHz 这几个现场最常用的听起。';
           } else {
-            elStatus.textContent = inSet ? elStatus.textContent : '选好音源和难度，点「出题」开始一组 10 题。';
+            elStatus.textContent = inSet ? elStatus.textContent : '选好音源，点「出题」开始一组 10 题。';
           }
+          buildAxis();
           renderBands();
           applyEq();
         }
@@ -2702,6 +2849,8 @@
           try { stopAllActivity(); } catch (e) {}
           hideAllPanels();
           $('page-top').classList.add('hidden');
+          $('level-bar').classList.add('hidden');
+          $('panel-level').classList.remove('hidden');
           $('home-header').classList.remove('hidden');
           $('home-menu').classList.remove('hidden');
           $('home-menu-head').classList.remove('hidden');
@@ -2715,8 +2864,10 @@
           $('home-menu').classList.add('hidden');
           $('home-menu-head').classList.add('hidden');
           $('panel-install').classList.add('hidden');
+          $('panel-level').classList.add('hidden');
           $('home-footer').classList.add('hidden');
           $('page-top').classList.remove('hidden');
+          $('level-bar').classList.remove('hidden');
           $('page-title').textContent = PAGE_TITLES[m] || '';
           setMode(m);
           resetScroll();
@@ -2796,8 +2947,15 @@
           b.addEventListener('click', function () {
             var bi = Number(b.dataset.band);
             if (isNaN(bi) || bi < 0 || bi >= BANDS.length) return;
+            // The zone names an octave band; solo listens on the current
+            // level's grid, so land on the step nearest that frequency.
+            var gf = BANDS[bi].f, grid = gridBands(), gi = 0, bd = Infinity;
+            grid.forEach(function (gb, i) {
+              var d = Math.abs(Math.log2(gb.f / gf));
+              if (d < bd) { bd = d; gi = i; }
+            });
             openPage('solo');
-            selectSolo(bi);
+            selectSolo(gi);
             var pb = $('panel-bands');
             if (pb && pb.scrollIntoView) {
               try { pb.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -2836,18 +2994,101 @@
             if (mode === 'quiz' && !inSet) btnNew.classList.remove('hidden');
           }
         });
-        segWire('seg-diff', 'diff', function (v) {
-          diffKey = v;
+        /* ============ level switching ============
+           One level drives every mode. Switching re-grids the current
+           mode in place: band buttons, RTA axis, faders and the quiz
+           pool all follow. State that can survive the move does —
+           manual fader gains and the ref/solo selections are carried
+           across by frequency; the quiz set restarts (its questions
+           were drawn from the old grid), and a ringing feedback tone
+           stops (its frequency may not exist on the new grid). The
+           chosen level itself is plain page state, so it survives
+           going home and coming back. */
+        function syncLevelUI() {
+          ['seg-level', 'seg-level-home'].forEach(function (id) {
+            var seg = $(id);
+            if (!seg) return;
+            seg.querySelectorAll('button').forEach(function (b) {
+              b.setAttribute('aria-pressed', b.dataset.level === levelKey ? 'true' : 'false');
+            });
+          });
+          var note = LEVELS[levelKey].note;
+          if ($('level-note')) $('level-note').textContent = note;
+          if ($('level-desc-home')) $('level-desc-home').textContent = note;
+          var n = gridBands().length;
+          if ($('mq-count-label')) $('mq-count-label').textContent = n + ' 段推子';
+        }
+        function nearestGridIdx(grid, f) {
+          var gi = 0, bd = Infinity;
+          grid.forEach(function (b, i) {
+            var d = Math.abs(Math.log2(b.f / f));
+            if (d < bd) { bd = d; gi = i; }
+          });
+          return gi;
+        }
+        function setLevel(key) {
+          if (!LEVELS[key]) return;
+          if (key === levelKey) { syncLevelUI(); return; }
+          var oldGrid = gridBands();
+          var savedFaders = oldGrid.map(function (b, i) {
+            return { f: b.f, g: manualGains[i] || 0, q: manualQIdx[i] == null ? 1 : manualQIdx[i] };
+          });
+          var refF = refIdx >= 0 && oldGrid[refIdx] ? oldGrid[refIdx].f : null;
+          var soloFq = soloIdx >= 0 && oldGrid[soloIdx] ? oldGrid[soloIdx].f : null;
+          if (fbBandIdx >= 0) stopFeedback(true);
+          levelKey = key;
+          var grid = gridBands();
+          manualGains = grid.map(function (b) {
+            var s = null, bd = Infinity;
+            savedFaders.forEach(function (sv) {
+              var d = Math.abs(Math.log2(sv.f / b.f));
+              if (d < bd) { bd = d; s = sv; }
+            });
+            return s && bd < 0.01 ? s.g : 0;
+          });
+          manualQIdx = grid.map(function (b) {
+            var s = null, bd = Infinity;
+            savedFaders.forEach(function (sv) {
+              var d = Math.abs(Math.log2(sv.f / b.f));
+              if (d < bd) { bd = d; s = sv; }
+            });
+            return s && bd < 0.01 ? s.q : 1;
+          });
+          refIdx = refF != null ? nearestGridIdx(grid, refF) : -1;
+          soloIdx = soloFq != null ? nearestGridIdx(grid, soloFq) : -1;
+          syncLevelUI();
           if (mode === 'quiz') {
-            // changing difficulty restarts the set so the band pool matches
             quiz = null; inSet = false; round = 0; right = 0; streak = 0; results = [];
             updateScore();
-            renderBands();
-            setBandsEnabled(true);
-            elStatus.textContent = DIFFS[v].note + '。点「出题」开始。';
+            $('summary').classList.remove('show');
+            elStatus.textContent = LEVELS[key].note + '点「出题」开始一组。';
             btnNew.classList.remove('hidden');
-            applyEq();
           }
+          if ((mode === 'ref' && refIdx >= 0) || (mode === 'solo' && soloIdx >= 0)) {
+            var cb = grid[mode === 'ref' ? refIdx : soloIdx];
+            $('ref-fr').textContent = cb.label;
+            $('ref-nm').textContent = cb.name + (mode === 'ref' ? '（' + (refDir === 'boost' ? '+10 dB 提升' : '−10 dB 衰减') + '）' : '（只放这个频段）');
+            $('ref-desc').textContent = cb.desc;
+          }
+          if (mode === 'feedback') {
+            if (levelFbIdxList().indexOf(notchBandIdx) < 0) notchBandIdx = -1;
+            $('fb-status').innerHTML = '级别已切换：找啸叫现在按<b>' + (key === 'begin' ? '入门 9 档倍频程' : key === 'mid' ? '进阶 16 档（250 Hz–8 kHz）' : '专业 25 档 1/3 倍频程') + '</b>出题，下方频段栏已跟着变。点「开始啸叫」试一题。';
+          }
+          buildAxis();
+          renderBands();
+          buildFaders();
+          syncAllFaders();
+          if (mode === 'quiz') setBandsEnabled(true);
+          applyEq();
+        }
+        ['seg-level', 'seg-level-home'].forEach(function (id) {
+          var seg = $(id);
+          if (!seg) return;
+          seg.addEventListener('click', function (e) {
+            var b = e.target.closest('button');
+            if (!b) return;
+            setLevel(b.dataset.level);
+          });
         });
         segWire('seg-refdir', 'dir', function (v) {
           refDir = v;
@@ -2876,8 +3117,8 @@
             startPlayback();
             if (loadPending) return; // loadRec has already put the 正在载入… state on screen
             if (mode === 'quiz' && quiz) elStatus.innerHTML = '正在播放。切到原声对比着听，再点你认为的频段。';
-            else if (mode === 'ref' && refIdx >= 0) elStatus.innerHTML = '正在播放 <b>' + BANDS[refIdx].label + '</b> 的参考声。';
-            else if (mode === 'solo' && soloIdx >= 0) elStatus.innerHTML = abOriginal ? '正在播放<b>完整原声</b>。点「回到单频段」只听 <b>' + BANDS[soloIdx].label + '</b>。' : '正在播放，只放 <b>' + BANDS[soloIdx].label + '</b> 这一个频段。点其他频段直接切换对比。';
+            else if (mode === 'ref' && refIdx >= 0) elStatus.innerHTML = '正在播放 <b>' + gridBands()[refIdx].label + '</b> 的参考声。';
+            else if (mode === 'solo' && soloIdx >= 0) elStatus.innerHTML = abOriginal ? '正在播放<b>完整原声</b>。点「回到单频段」只听 <b>' + gridBands()[soloIdx].label + '</b>。' : '正在播放，只放 <b>' + gridBands()[soloIdx].label + '</b> 这一个频段。点其他频段直接切换对比。';
             else if (mode === 'solo') elStatus.textContent = '正在播放完整原声。点任意频段，就只单独播放那个频段的声音。';
             else if (mode === 'ex' && exId) elStatus.innerHTML = abOriginal ? '正在播放<b>原声</b>（未调）。点「回到典范」听调好的样子。' : '正在播放典范「<b>' + EXEMPLARS[exId].title + '</b>」。点「听原声对比」切回未调的原声。';
             else if (mode === 'ex') elStatus.textContent = '正在播放原声。点任意一张典范卡上的「听典范」听调好的目标声。';
@@ -2898,7 +3139,7 @@
           } else if (mode === 'solo' && soloIdx >= 0) {
             elStatus.innerHTML = abOriginal
               ? '现在是<b>完整原声</b>——听听刚才那个频段在全声里占多少，再点「回到单频段」单独听它。'
-              : '现在只放 <b>' + BANDS[soloIdx].label + '</b> 这一个频段。';
+              : '现在只放 <b>' + gridBands()[soloIdx].label + '</b> 这一个频段。';
           } else {
             elStatus.innerHTML = abOriginal ? '现在是<b>原声</b>（没有动任何频段）。' : '现在是<b>处理后</b>的声音。';
           }
@@ -2910,6 +3151,8 @@
         /* ============ init ============ */
         buildFaders();
         buildLiveUI();
+        buildAxis();
+        syncLevelUI();
         renderBands();
         updateScore();
         btnNew.classList.remove('hidden');
