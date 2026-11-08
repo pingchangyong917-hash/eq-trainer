@@ -471,6 +471,39 @@
       }
       @media (prefers-color-scheme: dark) { .back-btn-end { color: #1c1503; } }
 
+      /* ---------- my media (recordings & imported files) ---------- */
+      .usermedia {
+        margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+      }
+      .um-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+      .um-head svg { color: var(--accent); flex: none; }
+      .um-note { margin: 6px 0 0; font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+      .um-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+      .um-actions .btn { padding: 9px 14px; font-size: 14.5px; }
+      .btn.rec-on { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 600; }
+      @media (prefers-color-scheme: dark) { .btn.rec-on { color: #1c1503; } }
+      .um-status { font-size: 14px; color: var(--ink-soft); margin: 10px 0 0; min-height: 22px; }
+      .um-status b { color: var(--ink); }
+      .um-status .rec-dot { color: var(--bad); font-weight: 700; }
+      .um-list { margin: 6px 0 0; padding: 0; list-style: none; }
+      .um-list li {
+        display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
+        padding: 10px 0; border-top: 1px solid var(--line);
+      }
+      .um-list li:first-child { border-top: 0; }
+      .um-list .um-name { font-weight: 600; font-size: 15px; word-break: break-all; }
+      .um-list .um-meta { font-size: 12.5px; color: var(--ink-soft); width: 100%; }
+      .um-list .um-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+      .um-list .um-btns .btn { padding: 6px 11px; font-size: 13.5px; border-radius: 9px; }
+      .um-list .um-btns .btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+      .um-list li.inuse .um-name { color: var(--accent-strong); }
+      .um-rename { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
+      .um-rename input {
+        font: inherit; font-size: 15px; padding: 7px 10px; flex: 1 1 160px;
+        border: 1px solid var(--line); border-radius: 9px;
+        background: var(--surface); color: var(--ink);
+      }
+
       footer { color: var(--ink-soft); font-size: 12.5px; text-align: center; margin-top: 4px; line-height: 1.6; padding: 0 8px; }
       .srcnote { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: flex-start; }
       .srcnote svg { flex: none; margin-top: 2px; color: var(--accent); }
@@ -585,6 +618,19 @@
             <label>音量</label>
             <input type="range" id="vol" min="0" max="100" value="70" aria-label="音量" />
           </div>
+        </div>
+
+        <div class="usermedia" id="user-media">
+          <div class="um-head"><i data-lucide="folder-open" width="18" height="18"></i><span>我的素材 · 录音和导入的音乐</span></div>
+          <p class="um-note">把自己唱的、讲的录下来，或者把下载好的音乐文件导入，就能用自己的声音当练习音源（盲听测试、参考练习、单频段聆听、手动调 EQ 都能选）。<b>录音和文件只保存在这台设备上，不上传、不发送到任何地方</b>；关掉页面再打开还在。换设备、换浏览器或清除浏览器数据后会消失。</p>
+          <div class="um-actions">
+            <button class="btn" id="btn-rec-start"><i data-lucide="mic" width="17" height="17"></i><span>开始录音</span></button>
+            <button class="btn rec-on hidden" id="btn-rec-stop"><i data-lucide="square" width="17" height="17"></i><span>停止录音</span></button>
+            <button class="btn" id="btn-import"><i data-lucide="file-music" width="17" height="17"></i><span>导入音乐文件</span></button>
+            <input type="file" id="file-import" class="hidden" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.flac" multiple />
+          </div>
+          <p class="um-status" id="um-status">还没有自己的素材。点「开始录音」录一段，或「导入音乐文件」选一个下载好的音乐文件。</p>
+          <ul class="um-list" id="um-list"></ul>
         </div>
 
         <div style="height:14px"></div>
@@ -1443,6 +1489,7 @@
 
         function currentBuffer(cb) {
           if (sourceKind === 'noise') { if (!noiseBuf) makeNoiseBuffer(); cb(noiseBuf); }
+          else if (sourceKind.indexOf('user:') === 0) { loadUserBuffer(sourceKind.slice(5), cb); }
           else if (RECORDINGS[sourceKind]) { loadRec(sourceKind, cb); }
           else { makeMusic(cb); }
         }
@@ -2811,6 +2858,8 @@
           feedback: '找啸叫', manual: '手动调 EQ', live: '现场监听', zones: 'EQ 区块划分'
         };
         function stopAllActivity() {
+          if (recState) { try { stopRecording(); } catch (e) {} }
+          stopPreview();
           if (fbBandIdx >= 0) stopFeedback(true);
           stopLive(true);
           stopPlayback();
@@ -3145,6 +3194,453 @@
         btnNew.addEventListener('click', newSet);
         $('btn-next').addEventListener('click', newQuestion);
         $('btn-again').addEventListener('click', newSet);
+
+        /* ============ my media: recordings & imported files ============
+           User-supplied audio: recorded from the mic (MediaRecorder) or
+           picked from the device's files. Everything lives ONLY on this
+           device, in IndexedDB ('eq-trainer-media' / 'items'); nothing
+           is uploaded anywhere. Each item becomes a selectable source
+           ('user:<id>') in the shared 音源 selector, so it plays through
+           the exact same EQ -> analyser -> master chain as the bundled
+           recordings in quiz / ref / solo / manual modes. */
+        var userRecs = {};   // id -> {id, name, kind:'rec'|'file', mime, dur, created, blob}
+        var userBufs = {};   // id -> decoded AudioBuffer (session cache)
+        var recState = null; // active MediaRecorder session
+        var previewAudio = null, previewId = null, previewUrl = null;
+
+        function escHtml(s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+          });
+        }
+        function fmtDur(sec) {
+          if (!isFinite(sec) || sec == null || sec < 0) return '时长未知';
+          var s = Math.round(sec);
+          return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+        }
+        function umStatus(html) { var el = $('um-status'); if (el) el.innerHTML = html; }
+
+        /* ---- IndexedDB persistence ---- */
+        var idbPromise = null;
+        function idbOpen() {
+          if (idbPromise) return idbPromise;
+          idbPromise = new Promise(function (resolve, reject) {
+            if (!window.indexedDB) { reject(new Error('no-indexeddb')); return; }
+            var req = window.indexedDB.open('eq-trainer-media', 1);
+            req.onupgradeneeded = function () {
+              try { req.result.createObjectStore('items', { keyPath: 'id' }); } catch (e) {}
+            };
+            req.onsuccess = function () { resolve(req.result); };
+            req.onerror = function () { reject(req.error || new Error('idb-open')); };
+            req.onblocked = function () { reject(new Error('idb-blocked')); };
+          });
+          // A failed open should not poison later retries.
+          idbPromise.catch(function () { idbPromise = null; });
+          return idbPromise;
+        }
+        function idbTx(mode, fn) {
+          return idbOpen().then(function (db) {
+            return new Promise(function (resolve, reject) {
+              var tx = db.transaction('items', mode);
+              var store = tx.objectStore('items');
+              var out;
+              try { out = fn(store); } catch (e) { reject(e); return; }
+              tx.oncomplete = function () { resolve(out && out.__value !== undefined ? out.__value : out); };
+              tx.onerror = function () { reject(tx.error || new Error('idb-tx')); };
+              tx.onabort = function () { reject(tx.error || new Error('idb-abort')); };
+            });
+          });
+        }
+        function idbAll() {
+          return idbOpen().then(function (db) {
+            return new Promise(function (resolve, reject) {
+              var req = db.transaction('items', 'readonly').objectStore('items').getAll();
+              req.onsuccess = function () { resolve(req.result || []); };
+              req.onerror = function () { reject(req.error || new Error('idb-getall')); };
+            });
+          });
+        }
+        function idbPut(rec) {
+          return idbTx('readwrite', function (store) {
+            store.put({ id: rec.id, name: rec.name, kind: rec.kind, mime: rec.mime, dur: rec.dur, created: rec.created, blob: rec.blob });
+          });
+        }
+        function idbDel(id) {
+          return idbTx('readwrite', function (store) { store.delete(id); });
+        }
+        function storageFail(what) {
+          umStatus('<b>保存失败：</b>' + what + '没能存到本机。可能是浏览器存储空间不足，或当前是无痕 / 隐私浏览模式（这种模式下关掉页面素材就会丢）。腾出一点设备空间、或换正常模式打开本页再试。');
+        }
+
+        /* ---- rendering: source-selector buttons + the library list ---- */
+        function userSourceKey(id) { return 'user:' + id; }
+        function sortedUserRecs() {
+          return Object.keys(userRecs).map(function (k) { return userRecs[k]; })
+            .sort(function (a, b) { return a.created - b.created; });
+        }
+        function refreshSourceInfo(rec) {
+          SOURCE_INFO[userSourceKey(rec.id)] = '<b>' + escHtml(rec.name) + '</b> · ' +
+            (rec.kind === 'rec' ? '我录的声音' : '我导入的音乐') + '，走和其他音源一样的 EQ 与频谱。';
+        }
+        function renderUserMedia() {
+          var seg = $('seg-source');
+          if (seg) {
+            var olds = seg.querySelectorAll('button[data-user-item]');
+            olds.forEach(function (b) { b.remove(); });
+            sortedUserRecs().forEach(function (rec) {
+              refreshSourceInfo(rec);
+              var b = document.createElement('button');
+              b.dataset.src = userSourceKey(rec.id);
+              b.dataset.userItem = rec.id;
+              b.setAttribute('aria-pressed', sourceKind === userSourceKey(rec.id) ? 'true' : 'false');
+              b.textContent = (rec.kind === 'rec' ? '录音 · ' : '导入 · ') + rec.name;
+              seg.appendChild(b);
+            });
+          }
+          var list = $('um-list');
+          if (!list) return;
+          list.innerHTML = '';
+          var recs = sortedUserRecs();
+          if (!recs.length) {
+            umStatus('还没有自己的素材。点「开始录音」录一段自己唱的或讲的，或「导入音乐文件」选一个下载好的音乐文件。');
+            return;
+          }
+          recs.forEach(function (rec) {
+            var li = document.createElement('li');
+            if (sourceKind === userSourceKey(rec.id)) li.className = 'inuse';
+            var name = document.createElement('span');
+            name.className = 'um-name';
+            name.textContent = rec.name;
+            var btns = document.createElement('span');
+            btns.className = 'um-btns';
+            function mkBtn(label, icon, cls) {
+              var b = document.createElement('button');
+              b.className = 'btn' + (cls ? ' ' + cls : '');
+              b.innerHTML = '<i data-lucide="' + icon + '" width="15" height="15"></i><span>' + label + '</span>';
+              return b;
+            }
+            var useBtn = mkBtn(sourceKind === userSourceKey(rec.id) ? '使用中' : '用作音源', 'play-circle', '');
+            useBtn.addEventListener('click', function () { selectUserSource(rec.id); });
+            var prevBtn = mkBtn(previewId === rec.id ? '停止试听' : '试听', previewId === rec.id ? 'square' : 'play', '');
+            prevBtn.addEventListener('click', function () { togglePreview(rec.id); });
+            var renBtn = mkBtn('改名', 'pencil', '');
+            renBtn.addEventListener('click', function () { startRename(li, rec); });
+            var delBtn = mkBtn('删除', 'trash-2', 'danger');
+            delBtn.addEventListener('click', function () { deleteUserItem(rec.id); });
+            btns.appendChild(useBtn); btns.appendChild(prevBtn); btns.appendChild(renBtn); btns.appendChild(delBtn);
+            var meta = document.createElement('span');
+            meta.className = 'um-meta';
+            var d = new Date(rec.created);
+            meta.textContent = (rec.kind === 'rec' ? '录音' : '导入的文件') + ' · ' + fmtDur(rec.dur) + ' · ' +
+              d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) +
+              ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ' · 只存在本机';
+            li.appendChild(name); li.appendChild(btns); li.appendChild(meta);
+            list.appendChild(li);
+          });
+          icons();
+        }
+        function selectUserSource(id) {
+          var rec = userRecs[id];
+          if (!rec) return;
+          sourceKind = userSourceKey(id);
+          var seg = $('seg-source');
+          if (seg) seg.querySelectorAll('button').forEach(function (k) {
+            k.setAttribute('aria-pressed', k.dataset.src === sourceKind ? 'true' : 'false');
+          });
+          var noteEl = $('source-note-text');
+          if (noteEl) noteEl.innerHTML = SOURCE_INFO[sourceKind];
+          if (mode === 'ex') {
+            exId = null; abOriginal = false; updateAB();
+            var cards = $('ex-grid').children;
+            for (var ci = 0; ci < cards.length; ci++) cards[ci].classList.remove('active');
+            applyEq();
+          }
+          renderUserMedia();
+          if (playing) startPlayback();
+          else elStatus.textContent = '已选「' + rec.name + '」作音源，点「播放」就能用它练习。';
+        }
+
+        /* ---- decode a stored blob into the shared playback chain ---- */
+        function loadUserBuffer(id, cb) {
+          if (userBufs[id]) { cb(userBufs[id]); return; }
+          var rec = userRecs[id];
+          if (!rec || !rec.blob) { cb(null); return; }
+          loadPending = true;
+          elStatus.textContent = '正在载入「' + rec.name + '」…马上就好。';
+          btnPlay.innerHTML = '<span>正在载入… 点按取消</span>';
+          rec.blob.arrayBuffer().then(function (ab) {
+            return new Promise(function (resolve, reject) {
+              var maybe = null;
+              try { maybe = ctx.decodeAudioData(ab, resolve, reject); } catch (e) { reject(e); return; }
+              if (maybe && typeof maybe.catch === 'function') maybe.catch(reject);
+            });
+          }).then(function (buf) {
+            loadPending = false;
+            userBufs[id] = buf;
+            if (rec.dur !== buf.duration) {
+              rec.dur = buf.duration;
+              idbPut(rec).catch(function () {});
+            }
+            cb(buf);
+          }).catch(function () {
+            if (!loadPending) { cb(null); return; } // user cancelled
+            loadPending = false;
+            elStatus.textContent = '「' + rec.name + '」这个文件解不出来，没法播放。可以删掉它，换一个常见的 mp3 / m4a / wav 文件再导入。';
+            cb(null);
+          });
+        }
+
+        /* ---- preview (plain <audio> playback, outside the EQ chain) ---- */
+        function stopPreview() {
+          if (previewAudio) { try { previewAudio.pause(); } catch (e) {} previewAudio = null; }
+          if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch (e) {} previewUrl = null; }
+          previewId = null;
+        }
+        function togglePreview(id) {
+          if (previewId === id) { stopPreview(); renderUserMedia(); return; }
+          stopPreview();
+          var rec = userRecs[id];
+          if (!rec || !rec.blob) return;
+          try {
+            previewUrl = URL.createObjectURL(rec.blob);
+            previewAudio = new Audio(previewUrl);
+            previewId = id;
+            previewAudio.addEventListener('ended', function () { stopPreview(); renderUserMedia(); });
+            var p = previewAudio.play();
+            if (p && p.catch) p.catch(function () {
+              stopPreview();
+              umStatus('<b>试听失败：</b>这个文件在本机放不出来。可以删掉后换一个 mp3 / m4a / wav 文件再导入。');
+              renderUserMedia();
+            });
+          } catch (e) {
+            stopPreview();
+            umStatus('<b>试听失败：</b>这个文件在本机放不出来。');
+          }
+          renderUserMedia();
+        }
+
+        /* ---- rename / delete ---- */
+        function startRename(li, rec) {
+          li.innerHTML = '';
+          var wrap = document.createElement('div');
+          wrap.className = 'um-rename';
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.value = rec.name;
+          input.setAttribute('aria-label', '素材名字');
+          input.maxLength = 60;
+          var save = document.createElement('button');
+          save.className = 'btn primary';
+          save.innerHTML = '<span>保存</span>';
+          var cancel = document.createElement('button');
+          cancel.className = 'btn';
+          cancel.innerHTML = '<span>取消</span>';
+          save.addEventListener('click', function () {
+            var v = input.value.trim();
+            if (!v) { input.focus(); return; }
+            rec.name = v;
+            idbPut(rec).then(function () {
+              refreshSourceInfo(rec);
+              var noteEl = $('source-note-text');
+              if (noteEl && sourceKind === userSourceKey(rec.id)) noteEl.innerHTML = SOURCE_INFO[sourceKind];
+              renderUserMedia();
+              umStatus('已改名为「' + escHtml(v) + '」。');
+            }).catch(function () { storageFail('改名'); });
+          });
+          cancel.addEventListener('click', renderUserMedia);
+          wrap.appendChild(input); wrap.appendChild(save); wrap.appendChild(cancel);
+          li.appendChild(wrap);
+          icons();
+          input.focus();
+          try { input.select(); } catch (e) {}
+        }
+        function deleteUserItem(id) {
+          var rec = userRecs[id];
+          if (!rec) return;
+          if (previewId === id) stopPreview();
+          var wasSource = sourceKind === userSourceKey(id);
+          delete userRecs[id];
+          delete userBufs[id];
+          delete SOURCE_INFO[userSourceKey(id)];
+          idbDel(id).catch(function () {});
+          if (wasSource) {
+            if (playing) stopPlayback();
+            sourceKind = 'chusai';
+            var seg = $('seg-source');
+            if (seg) seg.querySelectorAll('button').forEach(function (k) {
+              k.setAttribute('aria-pressed', k.dataset.src === 'chusai' ? 'true' : 'false');
+            });
+            var noteEl = $('source-note-text');
+            if (noteEl && SOURCE_INFO.chusai) noteEl.innerHTML = SOURCE_INFO.chusai;
+            elStatus.textContent = '已删除「' + rec.name + '」，音源切回朗诵《出塞》。';
+          }
+          renderUserMedia();
+          umStatus('已删除「' + escHtml(rec.name) + '」，本机上不再保存它。');
+        }
+
+        /* ---- recording (MediaRecorder; iOS Safari records audio/mp4) ---- */
+        function pickRecMime() {
+          if (typeof MediaRecorder === 'undefined') return '';
+          var cands = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg'];
+          for (var i = 0; i < cands.length; i++) {
+            try { if (MediaRecorder.isTypeSupported(cands[i])) return cands[i]; } catch (e) {}
+          }
+          return '';
+        }
+        function startRecording() {
+          if (recState) return;
+          stopPreview();
+          var md = navigator.mediaDevices;
+          if (!md || typeof md.getUserMedia !== 'function' || typeof MediaRecorder === 'undefined') {
+            umStatus('<b>这个浏览器不能录音</b>（录音需要麦克风权限和 HTTPS 打开本页）。在 iPhone 上请用 Safari 打开本页再试。');
+            return;
+          }
+          umStatus('正在请求麦克风…弹出请求时点「允许」。');
+          md.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+            .then(function (stream) {
+              var mime = pickRecMime();
+              var mr;
+              try { mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+              catch (e) { mr = new MediaRecorder(stream); }
+              var chunks = [];
+              mr.addEventListener('dataavailable', function (e) { if (e.data && e.data.size) chunks.push(e.data); });
+              mr.addEventListener('stop', function () {
+                stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e2) {} });
+                var type = mr.mimeType || mime || 'audio/mp4';
+                var blob = new Blob(chunks, { type: type });
+                var dur = recState ? (Date.now() - recState.startedAt) / 1000 : 0;
+                if (recState && recState.timer) clearInterval(recState.timer);
+                recState = null;
+                $('btn-rec-start').classList.remove('hidden');
+                var sb = $('btn-rec-stop');
+                sb.classList.add('hidden');
+                sb.classList.remove('rec-on');
+                if (!blob.size) { umStatus('<b>这次没录到声音。</b>再点一次「开始录音」，对着麦克风唱或讲几句再停止。'); return; }
+                var now = new Date();
+                var n = Object.keys(userRecs).filter(function (k) { return userRecs[k].kind === 'rec'; }).length + 1;
+                var rec = {
+                  id: 'r' + Date.now().toString(36) + Math.floor(Math.random() * 1e4),
+                  name: '我的录音 ' + n + '（' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' +
+                    ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2) + '）',
+                  kind: 'rec', mime: type, dur: dur, created: Date.now(), blob: blob
+                };
+                userRecs[rec.id] = rec;
+                idbPut(rec).then(function () {
+                  renderUserMedia();
+                  umStatus('<b>录音已保存到本机。</b>「' + escHtml(rec.name) + '」' + fmtDur(dur) + '——点它的「用作音源」就能拿它练，或点「试听」先听一遍。');
+                  selectUserSource(rec.id);
+                }).catch(function () {
+                  delete userRecs[rec.id];
+                  storageFail('这段录音');
+                });
+              });
+              recState = { mr: mr, stream: stream, startedAt: Date.now(), timer: null };
+              mr.start(250);
+              $('btn-rec-start').classList.add('hidden');
+              var stopBtn = $('btn-rec-stop');
+              stopBtn.classList.remove('hidden');
+              stopBtn.classList.add('rec-on');
+              var tick = function () {
+                if (!recState) return;
+                var s = Math.floor((Date.now() - recState.startedAt) / 1000);
+                umStatus('<span class="rec-dot">● 正在录音 ' + Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2) + '</span> 对着麦克风唱或讲，录完点「停止录音」保存。录音只存在本机。');
+              };
+              tick();
+              recState.timer = setInterval(tick, 500);
+            })
+            .catch(function (err) {
+              if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+                umStatus('<b>麦克风没有被允许，录不了音。</b>iPhone：去「设置 → Safari → 麦克风」选「允许」，或点 Safari 地址栏左侧的网站设置允许麦克风；电脑浏览器：点地址栏里的麦克风 / 锁形图标允许。允许后回来再点「开始录音」。');
+              } else if (err && err.name === 'NotFoundError') {
+                umStatus('<b>找不到可用的麦克风。</b>确认麦克风没被其他 App 占用，插好耳机麦克风后再点「开始录音」重试。');
+              } else {
+                umStatus('<b>麦克风打开失败</b>（' + (err && err.name ? err.name : '未知错误') + '）。关掉其他正在用麦克风的 App，再点「开始录音」重试。');
+              }
+            });
+        }
+        function stopRecording() {
+          if (!recState) return;
+          try { recState.mr.stop(); } catch (e) {
+            if (recState.timer) clearInterval(recState.timer);
+            recState.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e2) {} });
+            recState = null;
+            $('btn-rec-start').classList.remove('hidden');
+            $('btn-rec-stop').classList.add('hidden');
+          }
+        }
+
+        /* ---- importing music files ---- */
+        function importFiles(fileList) {
+          var files = Array.prototype.slice.call(fileList || []);
+          if (!files.length) return;
+          ensureCtx();
+          var done = 0, failed = [];
+          function finish() {
+            if (done + failed.length < files.length) return;
+            renderUserMedia();
+            if (done && !failed.length) {
+              umStatus('<b>导入成功。</b>点素材的「用作音源」就能拿它练，「试听」先听一遍确认。');
+            } else if (done && failed.length) {
+              umStatus('<b>导入了 ' + done + ' 个文件</b>，另有 ' + failed.length + ' 个没导进来：' + escHtml(failed.join('、')) + '。没导进来的多半是格式浏览器解不了（如某些无损或加密文件），换 mp3 / m4a / wav 再试。');
+            } else if (failed.length) {
+              umStatus('<b>一个都没导进来：</b>' + escHtml(failed.join('、')) + '。这些格式浏览器解不了，换常见的 mp3 / m4a / wav 文件再试。');
+            }
+          }
+          files.forEach(function (file) {
+            var rawName = file.name ? file.name.replace(/\.[^.]+$/, '') : '导入的音乐';
+            file.arrayBuffer().then(function (ab) {
+              return new Promise(function (resolve, reject) {
+                var maybe = null;
+                try { maybe = ctx.decodeAudioData(ab.slice(0), resolve, reject); } catch (e) { reject(e); return; }
+                if (maybe && typeof maybe.catch === 'function') maybe.catch(reject);
+              }).then(function (buf) { return buf.duration; });
+            }).then(function (dur) {
+              var rec = {
+                id: 'f' + Date.now().toString(36) + Math.floor(Math.random() * 1e5),
+                name: rawName || '导入的音乐',
+                kind: 'file', mime: file.type || '', dur: dur, created: Date.now(), blob: file
+              };
+              userRecs[rec.id] = rec;
+              return idbPut(rec).then(function () {
+                done++;
+                selectUserSource(rec.id);
+              }).catch(function () {
+                delete userRecs[rec.id];
+                throw new Error('storage');
+              });
+            }).catch(function (err) {
+              if (err && err.message === 'storage') storageFail('文件「' + rawName + '」');
+              failed.push(file.name || '未命名文件');
+            }).then(finish);
+          });
+        }
+        /* ---- load everything saved on this device ---- */
+        function loadUserMedia() {
+          idbAll().then(function (items) {
+            (items || []).forEach(function (rec) {
+              if (rec && rec.id && rec.blob) userRecs[rec.id] = rec;
+            });
+            renderUserMedia();
+            if (Object.keys(userRecs).length) {
+              umStatus('本机已保存 <b>' + Object.keys(userRecs).length + '</b> 个自己的素材，点「用作音源」就能拿它练。');
+            }
+          }).catch(function () {
+            umStatus('<b>本机存储打不开</b>，之前保存的录音和导入文件这次读不出来。录音和导入仍可试用，但关掉页面就会丢。换 Safari / Chrome 正常模式（不要用无痕模式）打开本页再试。');
+          });
+        }
+
+        $('btn-rec-start').addEventListener('click', startRecording);
+        $('btn-rec-stop').addEventListener('click', stopRecording);
+        $('btn-import').addEventListener('click', function () { $('file-import').click(); });
+        $('file-import').addEventListener('change', function (e) {
+          importFiles(e.target.files);
+          e.target.value = '';
+        });
+        window.addEventListener('pagehide', function () {
+          if (recState) { try { recState.mr.stop(); } catch (e) {} }
+          stopPreview();
+        });
+        loadUserMedia();
 
         /* ============ init ============ */
         buildFaders();
