@@ -430,52 +430,9 @@
       }
       .back-btn:hover { border-color: var(--accent); }
 
-      /* Portrait phones: BOTH screen edges turned out to be unreliable
-         places for the way back. The top strip is covered by portrait
-         top chrome (notch / collapsing browser bar / host banner), and
-         a bar glued to bottom: 0 can likewise end up under the phone's
-         bottom toolbar / host chrome — visible, but taps land on the
-         chrome instead (a desktop browser has neither overlay, so this
-         only ever showed up on the real phone). The guaranteed way
-         back is therefore IN THE FLOW: every feature page ends with a
-         large 返回主页 button inside its last panel (.page-end below),
-         which scrolls with the content and can always be brought into
-         the uncovered middle of the screen. This fixed bar remains as
-         a shortcut, but it now floats as a pill lifted off the bottom
-         edge by the safe-area inset plus a gap, instead of sitting
-         flush in the strip the bottom chrome owns. It is only shown
-         while a feature page is open (the routing code toggles .hidden
-         on it together with the top bar), and it is not rendered on
-         wide screens, where the top bar is fine. */
-      .back-bar-bottom {
-        position: fixed; left: 10px; right: 10px; z-index: 90;
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-        display: flex; align-items: center; gap: 10px;
-        background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
-        box-shadow: var(--shadow-lg);
-        padding: 8px 10px;
-      }
-      .back-bar-bottom .bb-title {
-        flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ink-soft);
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right;
-      }
-      .back-btn-bottom {
-        appearance: none; font: inherit; cursor: pointer; border-radius: 12px;
-        border: 1px solid var(--accent); background: var(--accent); color: #fff;
-        padding: 0 20px; min-height: 52px; min-width: 148px;
-        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        font-size: 16px; font-weight: 600; flex: none;
-        touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-      }
-      @media (prefers-color-scheme: dark) { .back-btn-bottom { color: #1c1503; } }
-      @media (min-width: 761px) { .back-bar-bottom { display: none; } }
-      /* Keep the last panel (and its in-flow return button) clear of
-         the floating bottom bar: bar height + its bottom offset. */
-      @media (max-width: 760px) { body.in-page main { padding-bottom: 128px; } }
-
-      /* In-flow return button at the end of every feature page: the
-         one way back that no top or bottom screen chrome can cover,
-         because it scrolls with the page content. */
+      /* In-flow return button at the end of every feature page:
+         it scrolls with the page content, alongside the sticky
+         top 返回主页 bar. */
       .page-end { margin-top: 16px; }
       .back-btn-end {
         appearance: none; font: inherit; cursor: pointer; width: 100%;
@@ -871,7 +828,6 @@
         <h2><i data-lucide="smartphone" width="18" height="18"></i><span>装到手机上，像 App 一样打开</span></h2>
         <button class="btn primary hidden" id="btn-install"><i data-lucide="download" width="18" height="18"></i><span>安装「调音台 EQ 训练」</span></button>
         <ul class="install-steps">
-          <li><i data-lucide="chrome" width="17" height="17"></i><span><b>安卓（Chrome）：</b>点上方出现的「安装」按钮；没出现按钮时，点浏览器右上角菜单 ⋮ →「安装应用」或「添加到主屏幕」。</span></li>
           <li><i data-lucide="share" width="17" height="17"></i><span><b>iPhone（Safari）：</b>点底部分享按钮 →「添加到主屏幕」。装好后桌面会出现「调音台 EQ 训练」图标，点开全屏使用，没有浏览器地址栏。</span></li>
           <li><i data-lucide="wifi-off" width="17" height="17"></i><span><b>离线：</b>录音已打包在本页，装好后不靠在线播放。离线能否打开见下方状态。</span></li>
         </ul>
@@ -880,16 +836,6 @@
 
       <footer id="home-footer">音源出处：朗诵与朗读来自 LibriVox（公有领域）；三首英文歌为美国空军乐队官方录音（公有领域）。片段已存入本页，播放不依赖网络。<br>成绩只在本次打开期间保留。</footer>
     </main>
-
-    <!-- Floating bottom return bar (narrow / portrait screens only,
-         shown only while a feature page is open): a shortcut lifted off
-         the bottom edge. The guaranteed way back is the in-flow
-         返回主页 button at the end of each feature page, which no
-         screen-edge chrome can cover. -->
-    <div class="back-bar-bottom hidden" id="back-bar-bottom">
-      <button class="back-btn-bottom" id="btn-back-bottom"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button>
-      <span class="bb-title" id="bb-title"></span>
-    </div>
 
     <script>
       (function () {
@@ -2569,8 +2515,6 @@
           try { stopAllActivity(); } catch (e) {}
           hideAllPanels();
           $('page-top').classList.add('hidden');
-          var bb = $('back-bar-bottom'); if (bb) bb.classList.add('hidden');
-          if (document.body) document.body.classList.remove('in-page');
           $('home-header').classList.remove('hidden');
           $('home-menu').classList.remove('hidden');
           $('home-menu-head').classList.remove('hidden');
@@ -2587,9 +2531,6 @@
           $('home-footer').classList.add('hidden');
           $('page-top').classList.remove('hidden');
           $('page-title').textContent = PAGE_TITLES[m] || '';
-          var bb2 = $('back-bar-bottom'); if (bb2) bb2.classList.remove('hidden');
-          var bt = $('bb-title'); if (bt) bt.textContent = PAGE_TITLES[m] || '';
-          if (document.body) document.body.classList.add('in-page');
           setMode(m);
           resetScroll();
         }
@@ -2599,8 +2540,6 @@
           b.addEventListener('click', function () { openPage(b.dataset.page); });
         });
         $('btn-back').addEventListener('click', goHome);
-        var btnBackBottom = $('btn-back-bottom');
-        if (btnBackBottom) btnBackBottom.addEventListener('click', goHome);
         // In-flow return buttons at the end of each feature page.
         document.querySelectorAll('.btn-go-home').forEach(function (b) {
           b.addEventListener('click', goHome);
