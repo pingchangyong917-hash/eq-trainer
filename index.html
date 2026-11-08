@@ -678,27 +678,6 @@
         <div class="page-end"><button type="button" class="back-btn-end btn-go-home"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button></div>
       </section>
 
-      <section class="panel hidden" id="panel-bands" aria-label="频段选择">
-        <h2 id="bands-title"><i data-lucide="sliders-horizontal" width="18" height="18"></i><span>被动了哪个频段？点一个</span></h2>
-
-        <div class="scorebar" id="scorebar">
-          <span class="item">进度 <b class="mono" id="sb-round">– / 10</b></span>
-          <span class="dots" id="sb-dots" aria-hidden="true"></span>
-          <span class="item">答对 <b class="mono" id="sb-right">0</b></span>
-          <span class="item">连对 <b class="mono" id="sb-streak">0</b></span>
-        </div>
-
-        <div class="feedback" id="feedback" role="status"></div>
-
-        <div class="refcard" id="refcard">
-          <span class="fr mono" id="ref-fr"></span><span class="nm" id="ref-nm"></span>
-          <p id="ref-desc"></p>
-        </div>
-
-        <div class="bands" id="bands"></div>
-        <div class="page-end"><button type="button" class="back-btn-end btn-go-home"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button></div>
-      </section>
-
       <section class="panel hidden" id="panel-fb" aria-label="找啸叫频率">
         <h2><i data-lucide="siren" width="18" height="18"></i><span>找啸叫频率</span></h2>
         <div class="fb-warn">
@@ -725,29 +704,53 @@
         </div>
         <p class="status" id="fb-status" style="margin:0 0 12px">点「开始啸叫」，啸叫会像现场一样慢慢响起来。听出大概是哪个频率，就在下方频段区点一个作答。下方频段按当前训练级别出题：入门 9 档倍频程先认大方向，进阶 16 档（250 Hz–8 kHz），专业 25 档 1/3 倍频程（63 Hz–16 kHz）——现场啸叫落在 2.5 k、3.15 k 这种位置，在专业级都对得上号。</p>
         <div class="feedback" id="fb-feedback" role="status"></div>
-        <div class="notch-box hidden" id="notch-box">
-          <h3>止啸操作台 · 用窄切把啸叫压下去</h3>
-          <p style="margin:0;font-size:14.5px">在下方频段区点你判断的啸叫频段，再拖切入深度、选 Q 值。切对频段、够深、够窄，啸叫会真的变小、停下来；切得太宽太深，下面的音源会跟着变薄。</p>
-          <div class="notch-grid">
-            <div class="field">
-              <label>切入深度 <span class="val mono" id="notch-depth-val">−8 dB</span></label>
-              <input type="range" id="notch-depth" min="0" max="15" step="0.5" value="8" aria-label="切入深度（dB）" />
-            </div>
-            <div class="field">
-              <label>Q 值（宽度）</label>
-              <div class="seg" id="seg-notchq">
-                <button data-q="1.5" aria-pressed="false">宽 Q1.5</button>
-                <button data-q="4" aria-pressed="false">中 Q4</button>
-                <button data-q="8" aria-pressed="true">窄 Q8</button>
-                <button data-q="14" aria-pressed="false">极窄 Q14</button>
-              </div>
-            </div>
-            <button class="btn primary" id="btn-notch-check"><i data-lucide="check-circle-2" width="18" height="18"></i><span>检查止啸效果</span></button>
-          </div>
-          <div class="notch-meter" aria-hidden="true"><i id="notch-meter-fill"></i></div>
-          <div class="notch-meter-cap"><span>啸叫残余</span><span id="notch-meter-label">还没开始</span></div>
-          <p class="hint"><b>下手要领：</b>先找到频段，再用窄 Q（8–14）、切 6–10 dB——够压住啸叫，又不伤声音厚度。Q 太宽（1.5）会把一大片声音切薄；切过 12 dB 往往是切错了频段，或者切得太狠。压住后往回退 1–2 dB，找到刚好不响的那一点，就是现场要的刻度。频段已经细到 1/3 倍频程：你对准的那一档，就是图示均衡器上对应的那一根推子；切偏一档时窄切只剩边缘压到一点，别将就。</p>
+      </section>
+
+      <section class="panel hidden" id="panel-bands" aria-label="频段选择">
+        <h2 id="bands-title"><i data-lucide="sliders-horizontal" width="18" height="18"></i><span>被动了哪个频段？点一个</span></h2>
+
+        <div class="scorebar" id="scorebar">
+          <span class="item">进度 <b class="mono" id="sb-round">– / 10</b></span>
+          <span class="dots" id="sb-dots" aria-hidden="true"></span>
+          <span class="item">答对 <b class="mono" id="sb-right">0</b></span>
+          <span class="item">连对 <b class="mono" id="sb-streak">0</b></span>
         </div>
+
+        <div class="feedback" id="feedback" role="status"></div>
+
+        <div class="refcard" id="refcard">
+          <span class="fr mono" id="ref-fr"></span><span class="nm" id="ref-nm"></span>
+          <p id="ref-desc"></p>
+        </div>
+
+        <div class="bands" id="bands"></div>
+        <div class="page-end" id="bands-page-end"><button type="button" class="back-btn-end btn-go-home"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button></div>
+      </section>
+
+      <section class="panel hidden" id="panel-fb-notch" aria-label="止啸练习">
+        <div class="notch-box hidden" id="notch-box">
+                  <h3>止啸操作台 · 用窄切把啸叫压下去</h3>
+                  <p style="margin:0;font-size:14.5px">在上方频段区点你判断的啸叫频段，再拖切入深度、选 Q 值。切对频段、够深、够窄，啸叫会真的变小、停下来；切得太宽太深，下面的音源会跟着变薄。</p>
+                  <div class="notch-grid">
+                    <div class="field">
+                      <label>切入深度 <span class="val mono" id="notch-depth-val">−8 dB</span></label>
+                      <input type="range" id="notch-depth" min="0" max="15" step="0.5" value="8" aria-label="切入深度（dB）" />
+                    </div>
+                    <div class="field">
+                      <label>Q 值（宽度）</label>
+                      <div class="seg" id="seg-notchq">
+                        <button data-q="1.5" aria-pressed="false">宽 Q1.5</button>
+                        <button data-q="4" aria-pressed="false">中 Q4</button>
+                        <button data-q="8" aria-pressed="true">窄 Q8</button>
+                        <button data-q="14" aria-pressed="false">极窄 Q14</button>
+                      </div>
+                    </div>
+                    <button class="btn primary" id="btn-notch-check"><i data-lucide="check-circle-2" width="18" height="18"></i><span>检查止啸效果</span></button>
+                  </div>
+                  <div class="notch-meter" aria-hidden="true"><i id="notch-meter-fill"></i></div>
+                  <div class="notch-meter-cap"><span>啸叫残余</span><span id="notch-meter-label">还没开始</span></div>
+                  <p class="hint"><b>下手要领：</b>先找到频段，再用窄 Q（8–14）、切 6–10 dB——够压住啸叫，又不伤声音厚度。Q 太宽（1.5）会把一大片声音切薄；切过 12 dB 往往是切错了频段，或者切得太狠。压住后往回退 1–2 dB，找到刚好不响的那一点，就是现场要的刻度。频段已经细到 1/3 倍频程：你对准的那一档，就是图示均衡器上对应的那一根推子；切偏一档时窄切只剩边缘压到一点，别将就。</p>
+                </div>
         <div class="page-end"><button type="button" class="back-btn-end btn-go-home"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button></div>
       </section>
 
@@ -2389,6 +2392,11 @@
           } else {
             setTimeout(doScroll, 60);
           }
+          // Late second pass: on iOS the first smooth scroll can be
+          // shortened when the status/feedback text above the bands
+          // changes height; re-measuring and scrolling again lands the
+          // (repositioned) band panel fully below the sticky top bar.
+          setTimeout(doScroll, 380);
         }
         function startFeedback() {
           ensureCtx();
@@ -2701,6 +2709,8 @@
           $('panel-play').classList.toggle('hidden', m === 'live' || m === 'zones' || m === 'feedback');
           $('panel-ex').classList.toggle('hidden', m !== 'ex');
           $('panel-fb').classList.toggle('hidden', m !== 'feedback');
+          var pfnEl = $('panel-fb-notch'); if (pfnEl) pfnEl.classList.toggle('hidden', !(m === 'feedback' && fbSubmode === 'notch'));
+          var bpeEl = $('bands-page-end'); if (bpeEl) bpeEl.classList.toggle('hidden', m === 'feedback');
           $('panel-manual').classList.toggle('hidden', m !== 'manual');
           $('panel-live').classList.toggle('hidden', m !== 'live');
           $('panel-zones').classList.toggle('hidden', m !== 'zones');
@@ -2816,7 +2826,7 @@
           stopPlayback();
         }
         function hideAllPanels() {
-          ['panel-play', 'panel-ex', 'panel-bands', 'panel-fb', 'panel-manual', 'panel-live', 'panel-zones', 'panel-tips'].forEach(function (id) {
+          ['panel-play', 'panel-ex', 'panel-bands', 'panel-fb', 'panel-fb-notch', 'panel-manual', 'panel-live', 'panel-zones', 'panel-tips'].forEach(function (id) {
             var el = $(id);
             if (el) el.classList.add('hidden');
           });
@@ -2900,6 +2910,7 @@
           var kids = $('seg-fbmode').querySelectorAll('button');
           kids.forEach(function (k) { k.setAttribute('aria-pressed', k === b ? 'true' : 'false'); });
           $('notch-box').classList.toggle('hidden', fbSubmode !== 'notch');
+          var pfn2 = $('panel-fb-notch'); if (pfn2) pfn2.classList.toggle('hidden', fbSubmode !== 'notch');
           var fbEl = $('fb-feedback');
           fbEl.className = 'feedback';
           fbEl.innerHTML = '';
