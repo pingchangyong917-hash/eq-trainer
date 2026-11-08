@@ -196,6 +196,10 @@
       .band.sel { border-color: var(--accent); background: var(--accent-soft); }
       .band.correct { border-color: var(--good); background: var(--good-soft); opacity: 1; }
       .band.wrong { border-color: var(--bad); background: var(--bad-soft); opacity: 1; }
+      /* 找啸叫's 1/3-octave grid: 25 smaller buttons, same look. */
+      .bands.fb25 .band { padding: 10px 2px 8px; }
+      .bands.fb25 .band .fr { font-size: 16px; }
+      .bands.fb25 .band .nm { font-size: 11px; }
 
       /* ---------- feedback ---------- */
       .feedback { border-radius: var(--radius); padding: 13px 15px; font-size: 15px; display: none; margin: 0 0 14px; }
@@ -293,7 +297,6 @@
       .install-steps li:first-child { border-top: 0; padding-top: 2px; }
       .install-steps svg { flex: none; margin-top: 3px; color: var(--accent); }
       .install-steps b { color: var(--accent-strong); }
-      #pwa-status { font-size: 13.5px; color: var(--ink-soft); margin: 10px 0 0; }
       #btn-install { margin-bottom: 12px; }
 
       /* ---------- feedback hunting ---------- */
@@ -366,8 +369,13 @@
       .live-note b { color: var(--accent-strong); }
       .axis span.hot { color: #ef7d75; font-weight: 700; }
       .axis span.hot::before { background: #ef7d75; }
+      /* Live axis has all 25 1/3-octave ticks in the DOM, but only the
+         octave ticks are labelled — 25 labels would collide. A fine
+         tick's label appears when that step is the suspected ring. */
+      #live-axis span.fine { visibility: hidden; }
+      #live-axis span.fine.hot { visibility: visible; }
       .live-meters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
-      @media (min-width: 720px) { .live-meters { grid-template-columns: repeat(9, 1fr); } }
+      @media (min-width: 720px) { .live-meters { grid-template-columns: repeat(5, 1fr); } }
       .live-meter {
         background: var(--surface-2); border-radius: var(--radius);
         padding: 8px 8px 9px; text-align: center;
@@ -494,7 +502,7 @@
         </button>
         <button class="menu-item" data-page="feedback">
           <span class="mi-icon"><i data-lucide="siren" width="22" height="22"></i></span>
-          <span class="mi-body"><span class="mi-t">找啸叫</span><span class="mi-d">听出啸叫在哪个频段，再亲手窄切止啸</span></span>
+          <span class="mi-body"><span class="mi-t">找啸叫</span><span class="mi-d">按 1/3 倍频程 25 档听出啸叫频率，再亲手窄切止啸</span></span>
           <span class="mi-arrow"><i data-lucide="chevron-right" width="18" height="18"></i></span>
         </button>
         <button class="menu-item" data-page="manual">
@@ -685,7 +693,7 @@
           <span class="item">辨认答对 <b class="mono" id="fb-right">0</b></span>
           <span class="item">成功止啸 <b class="mono" id="fb-notched">0</b> 次</span>
         </div>
-        <p class="status" id="fb-status" style="margin:0 0 12px">点「开始啸叫」，啸叫会像现场一样慢慢响起来。听出大概是哪个频段，就在下方频段区点一个作答。</p>
+        <p class="status" id="fb-status" style="margin:0 0 12px">点「开始啸叫」，啸叫会像现场一样慢慢响起来。听出大概是哪个频率，就在下方频段区点一个作答。下方频段已按 1/3 倍频程细分成 25 档（63 Hz–16 kHz），和现场 31 段图示均衡器同一套分法——现场啸叫落在 2.5 k、3.15 k 这种位置，在这里都对得上号。</p>
         <div class="feedback" id="fb-feedback" role="status"></div>
         <div class="notch-box hidden" id="notch-box">
           <h3>止啸操作台 · 用窄切把啸叫压下去</h3>
@@ -708,7 +716,7 @@
           </div>
           <div class="notch-meter" aria-hidden="true"><i id="notch-meter-fill"></i></div>
           <div class="notch-meter-cap"><span>啸叫残余</span><span id="notch-meter-label">还没开始</span></div>
-          <p class="hint"><b>下手要领：</b>先找到频段，再用窄 Q（8–14）、切 6–10 dB——够压住啸叫，又不伤声音厚度。Q 太宽（1.5）会把一大片声音切薄；切过 12 dB 往往是切错了频段，或者切得太狠。压住后往回退 1–2 dB，找到刚好不响的那一点，就是现场要的刻度。</p>
+          <p class="hint"><b>下手要领：</b>先找到频段，再用窄 Q（8–14）、切 6–10 dB——够压住啸叫，又不伤声音厚度。Q 太宽（1.5）会把一大片声音切薄；切过 12 dB 往往是切错了频段，或者切得太狠。压住后往回退 1–2 dB，找到刚好不响的那一点，就是现场要的刻度。频段已经细到 1/3 倍频程：你对准的那一档，就是图示均衡器上对应的那一根推子；切偏一档时窄切只剩边缘压到一点，别将就。</p>
         </div>
         <div class="page-end"><button type="button" class="back-btn-end btn-go-home"><i data-lucide="arrow-left" width="19" height="19"></i><span>返回主页</span></button></div>
       </section>
@@ -833,9 +841,7 @@
         <button class="btn primary hidden" id="btn-install"><i data-lucide="download" width="18" height="18"></i><span>安装「调音台 EQ 训练」</span></button>
         <ul class="install-steps">
           <li><i data-lucide="share" width="17" height="17"></i><span><b>iPhone（Safari）：</b>点底部分享按钮 →「添加到主屏幕」。装好后桌面会出现「调音台 EQ 训练」图标，点开全屏使用，没有浏览器地址栏。</span></li>
-          <li><i data-lucide="wifi-off" width="17" height="17"></i><span><b>离线：</b>录音已打包在本页，装好后不靠在线播放。离线能否打开见下方状态。</span></li>
         </ul>
-        <p id="pwa-status">正在检测这台设备上的安装与离线状态…</p>
       </section>
 
       <footer id="home-footer">音源出处：朗诵与朗读来自 LibriVox（公有领域）；三首英文歌为美国空军乐队官方录音（公有领域）。片段已存入本页，播放不依赖网络。<br>成绩只在本次打开期间保留。</footer>
@@ -895,6 +901,91 @@
           '像哨子一样的细高音「嘶唧——」，带一点齿音的毛边。这一带啸叫常和齿音重叠，止啸切窄一点，免得把人声切暗。',
           '极细的「叮——」高频啸，很多人几乎听不见，只觉得耳朵发胀、烦躁。先确认是不是真啸叫（也可能是设备高频自激），音箱高音单元和话筒距离太近时容易出。'
         ];
+        /* ============ feedback hunting: 1/3-octave grid ============
+           Live feedback almost never sits exactly on an octave centre —
+           it rings at 2.5 kHz, 3.15 kHz, 800 Hz… — so the 找啸叫 mode
+           does NOT use the 9 octave BANDS above. It uses the 1/3-octave
+           centres of a professional 31-band graphic EQ, restricted to
+           the 63 Hz–16 kHz range where feedback actually happens:
+           25 steps. `name` is the wider region the step belongs to (the
+           same region names as the 9-band grid). The other modes keep
+           using BANDS untouched. */
+        var FB_BANDS = [
+          { f: 63,    label: '63 Hz',    name: '低频根基' },
+          { f: 80,    label: '80 Hz',    name: '低频根基' },
+          { f: 100,   label: '100 Hz',   name: '低频根基' },
+          { f: 125,   label: '125 Hz',   name: '饱满厚度' },
+          { f: 160,   label: '160 Hz',   name: '饱满厚度' },
+          { f: 200,   label: '200 Hz',   name: '饱满厚度' },
+          { f: 250,   label: '250 Hz',   name: '浑浊区' },
+          { f: 315,   label: '315 Hz',   name: '浑浊区' },
+          { f: 400,   label: '400 Hz',   name: '浑浊区' },
+          { f: 500,   label: '500 Hz',   name: '盒子感' },
+          { f: 630,   label: '630 Hz',   name: '盒子感' },
+          { f: 800,   label: '800 Hz',   name: '盒子感' },
+          { f: 1000,  label: '1 kHz',    name: '中频主体' },
+          { f: 1250,  label: '1.25 kHz', name: '中频主体' },
+          { f: 1600,  label: '1.6 kHz',  name: '中频主体' },
+          { f: 2000,  label: '2 kHz',    name: '临场穿透' },
+          { f: 2500,  label: '2.5 kHz',  name: '临场穿透' },
+          { f: 3150,  label: '3.15 kHz', name: '临场穿透' },
+          { f: 4000,  label: '4 kHz',    name: '清晰与边缘' },
+          { f: 5000,  label: '5 kHz',    name: '清晰与边缘' },
+          { f: 6300,  label: '6.3 kHz',  name: '清晰与边缘' },
+          { f: 8000,  label: '8 kHz',    name: '明亮与齿音' },
+          { f: 10000, label: '10 kHz',   name: '明亮与齿音' },
+          { f: 12500, label: '12.5 kHz', name: '明亮与齿音' },
+          { f: 16000, label: '16 kHz',   name: '空气感' }
+        ];
+        /* What feedback sounds like in each of the 9 wider regions —
+           same characters as FB_TRAITS, but worded without pinning the
+           advice to one octave frequency, so the text stays correct for
+           every 1/3-octave step inside the region. Index = region of the
+           fine step: Math.floor(step / 3), clamped to 8. */
+        var FB_REGION_TRAITS = [
+          '低频啸叫不是尖叫，是「嗡——」的闷响轰鸣，常伴着话筒和音箱一起共振。现场多半是低频堆积加话筒离音箱太近：先开高通、把低频收下来，再拉开话筒和音箱的距离。',
+          '像大号嗡鸣、带一点「呜呜」的共鸣声，胸口能感觉到压。常见于话筒靠近墙角、低频反射叠出来的位置。先在这一带小切，再挪话筒位置，别只靠 EQ 硬压。',
+          '浑厚的「呜——」声，像吹空瓶口，闷而有力。讲台话筒、木地板小堂最容易在这里响。在这一档窄切 6 dB 左右通常能止住，同时顺手去一点浑浊。',
+          '带鼻音的「嗯——」声，像隔着盒子喊。这一段啸叫多半是话筒和返送音箱正对上了。先动角度和距离，再在这一档窄切。',
+          '已经接近「鸣笛」了，是那种平直的「哔——」音，电话听筒里似的。这一带啸叫通常说明增益已经推得很高，先把通道增益退一点，再考虑 EQ。',
+          '尖锐的「唧——」声，非常扎耳朵，是现场最常见的啸叫区之一。人声临场感也在这里，所以止啸务必用窄切，别宽切把清晰度一起切掉。',
+          '高而细的「啾——」啸声，刺耳、穿透力强，也是啸叫最高发的一段。往往是话筒正对高音单元或歌手把话筒捂住了。窄切止啸加提醒歌手别捂话筒头。',
+          '像哨子一样的细高音「嘶唧——」，带一点齿音的毛边。这一带啸叫常和齿音重叠，止啸切窄一点，免得把人声切暗。',
+          '极细的「叮——」高频啸，很多人几乎听不见，只觉得耳朵发胀、烦躁。先确认是不是真啸叫（也可能是设备高频自激），音箱高音单元和话筒距离太近时容易出。'
+        ];
+        function fbTraitFor(fineIdx) {
+          var r = Math.floor(fineIdx / 3);
+          if (r < 0) r = 0; if (r > 8) r = 8;
+          return FB_REGION_TRAITS[r];
+        }
+        /* Index of the 1/3-octave step nearest to an arbitrary measured
+           frequency (log-distance). Used by 现场监听 to REPORT the ring
+           on the same fine grid the training uses — reporting precision
+           only; detection itself is unchanged. */
+        function nearestFbIdx(f) {
+          var best = 0, bd = Infinity;
+          for (var i = 0; i < FB_BANDS.length; i++) {
+            var d = Math.abs(Math.log2(f / FB_BANDS[i].f));
+            if (d < bd) { bd = d; best = i; }
+          }
+          return best;
+        }
+        /* Explains how a picked step relates to the actual ringing step,
+           in 1/3-octave steps — so a near miss teaches the live-desk move
+           (nudge one fader over) instead of feeling like a lost guess.
+           Returns '' when the pick is exact or far away. */
+        function fbNearText(picked, actual) {
+          var d = picked - actual;
+          if (d === 0) return '';
+          var steps = Math.abs(d);
+          if (steps > 2) return '';
+          var dirWord = d > 0 ? '偏高' : '偏低';
+          var backWord = d > 0 ? '往低挪一档' : '往高挪一档';
+          if (steps === 1) {
+            return '你选的 <b class="mono">' + FB_BANDS[picked].label + '</b> 和实际的 <b class="mono">' + FB_BANDS[actual].label + '</b> 只差一档——就是 1/3 倍频程，' + dirWord + '了一点点。现场处理思路完全一样：图示均衡器上就是相邻的那一根推子，参量 EQ 把频率' + backWord + '即可；窄切切在相邻档时，切口边缘也能压到一部分啸叫，但要压干净还是得对准那一档。';
+          }
+          return '你选的 <b class="mono">' + FB_BANDS[picked].label + '</b> 和实际的 <b class="mono">' + FB_BANDS[actual].label + '</b> 差了两档（2/3 倍频程），' + dirWord + '了，但已经在同一个大区里。现场就按这个方向找，再往相邻档一档一档试过去，很快能锁定。';
+        }
         /* Manual-EQ state: one gain and one Q step per band. Q steps are
            宽 (0.8) / 中 (1.6) / 窄 (3.2). */
         var Q_STEPS = [
@@ -1366,14 +1457,17 @@
           return 0.11;
         }
         // How much of the current notch settings actually bites at the
-        // ringing frequency (dB, positive number = cut achieved).
+        // ringing frequency (dB, positive number = cut achieved). Both
+        // frequencies live on the 1/3-octave FB_BANDS grid; the bite is
+        // the same gaussian-on-log-frequency model eqResponseDb uses,
+        // evaluated for this single notch — so aiming one step (1/3
+        // octave) off still earns the partial cut the filter's skirt
+        // really delivers, and the check can say so honestly.
         function effectiveNotchCut() {
           if (fbBandIdx < 0 || notchBandIdx < 0) return 0;
-          var gains = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-          gains[notchBandIdx] = -notchDepth;
-          var qs = [1, 1, 1, 1, 1, 1, 1, 1, 1];
-          qs[notchBandIdx] = notchQ;
-          return Math.max(0, -eqResponseDb(BANDS[fbBandIdx].f, gains, qs));
+          var oct = Math.log2(FB_BANDS[fbBandIdx].f / FB_BANDS[notchBandIdx].f);
+          var sigma = 1.1 / Math.sqrt(notchQ);
+          return Math.max(0, notchDepth * Math.exp(-(oct * oct) / (2 * sigma * sigma)));
         }
         function notchResidual() {
           if (fbBandIdx < 0) return 0;
@@ -1387,7 +1481,7 @@
         }
         function refreshFbGain() {
           if (!fbGainNode || !ctx || fbBandIdx < 0) return;
-          var peak = fbPeak(BANDS[fbBandIdx].f);
+          var peak = fbPeak(FB_BANDS[fbBandIdx].f);
           var g = fbSubmode === 'notch' ? peak * notchResidual() : peak * fbLevel;
           fbGainNode.gain.setTargetAtTime(g, ctx.currentTime, 0.06);
         }
@@ -1442,7 +1536,7 @@
             // Notch practice: the shared EQ node becomes the user's notch
             // filter — it cuts the ringing tone and the program together.
             if (fbSubmode === 'notch' && fbBandIdx >= 0 && notchBandIdx >= 0 && !abOriginal) {
-              targetF = BANDS[notchBandIdx].f;
+              targetF = FB_BANDS[notchBandIdx].f;
               targetG = -notchDepth;
               targetQ = notchQ;
             }
@@ -1505,7 +1599,7 @@
           // highlight marker for revealed / reference band
           var markF = null;
           window.__eqMode = mode;
-          if (mode === 'feedback' && fbBandIdx >= 0 && fbAnswered) markF = BANDS[fbBandIdx].f;
+          if (mode === 'feedback' && fbBandIdx >= 0 && fbAnswered) markF = FB_BANDS[fbBandIdx].f;
           if (mode === 'ref' && refIdx >= 0) markF = BANDS[refIdx].f;
           if (mode === 'solo' && soloIdx >= 0) markF = BANDS[soloIdx].f;
           if (mode === 'quiz' && quiz && quiz.answered) markF = BANDS[quiz.bandIdx].f;
@@ -1599,16 +1693,21 @@
 
         function buildLiveUI() {
           var axis = $('live-axis');
-          BANDS.forEach(function (b, i) {
+          /* The live monitor reports on the same 1/3-octave grid as the
+             找啸叫 training (FB_BANDS, 25 steps). All 25 tick spans are
+             built; CSS keeps only the octave ticks labelled (25 labels
+             would collide on a phone screen) unless one lights up hot. */
+          FB_BANDS.forEach(function (b, i) {
             var s = document.createElement('span');
             s.dataset.f = b.f;
-            if (i === BANDS.length - 1) s.className = 'last';
+            if (i % 3 !== 0 && i !== FB_BANDS.length - 1) s.className = 'fine';
+            if (i === FB_BANDS.length - 1) s.className = 'last';
             s.style.left = (freqX(b.f, 100)) + '%';
             s.textContent = b.f >= 1000 ? (b.f / 1000) + 'k' : String(b.f);
             axis.appendChild(s);
           });
           var wrap = $('live-meters');
-          BANDS.forEach(function (b, i) {
+          FB_BANDS.forEach(function (b, i) {
             var cell = document.createElement('div');
             cell.className = 'live-meter';
             cell.id = 'lm-' + i;
@@ -1695,7 +1794,7 @@
           /* The locked feedback record (#live-lockbox) is deliberately NOT
              cleared here: stopping the mic must not throw away the last
              measured values. Only the 重新监测 button clears them. */
-          BANDS.forEach(function (b, i) {
+          FB_BANDS.forEach(function (b, i) {
             var cell = $('lm-' + i);
             if (!cell) return;
             cell.classList.remove('hot');
@@ -1723,18 +1822,23 @@
 
         function renderLiveLock() {
           if (!liveLock) return;
-          var b = BANDS[liveLock.band];
+          /* liveLock.band indexes FB_BANDS (the 1/3-octave grid the
+             detector now works on), so the locked report names the exact
+             graphic-EQ step to cut — e.g. 2.5 kHz, not just "2 kHz 段".
+             The measured peak frequency inside the step is kept as the
+             实测 line. Locking / clearing behaviour is unchanged. */
+          var b = FB_BANDS[liveLock.band];
           var el = $('live-lockbox');
           el.innerHTML =
             '<div class="head"><i data-lucide="siren" width="18" height="18"></i><span>已监测到啸叫 · 数值已锁定</span></div>' +
             '<div class="live-lock-meta">' +
-              '<span><span class="k">啸叫频率</span><b class="mono">' + liveFmtFreq(liveLock.freq) + '</b>（' + b.label + ' 频段）</span>' +
+              '<span><span class="k">啸叫频率</span><b class="mono">' + b.label + '</b>（1/3 倍频程档 · 实测峰值' + liveFmtFreq(liveLock.freq) + '）</span>' +
               '<span><span class="k">峰值电平</span><b class="mono">' + Math.round(liveLock.peakDb) + ' dB</b></span>' +
               '<span><span class="k">监测时间</span><b class="mono">' + liveFmtTime(liveLock.time) + '</b></span>' +
             '</div>' +
-            '<p>' + FB_TRAITS[liveLock.band] + '</p>' +
+            '<p>' + fbTraitFor(liveLock.band) + '</p>' +
             '<div class="action"><b>先止住：</b>把这支话筒的音量或增益先拉下来一点，别让它继续涨。</div>' +
-            '<div class="action"><b>再处理：</b>在 <span class="mono">' + b.label + '</span> 附近用窄 Q（8–14）切 <b>3–6 dB</b>，先切 3 dB，不够再一档档加深；切完往回退一点，找到刚好不响的位置。</div>' +
+            '<div class="action"><b>再处理：</b>在 <span class="mono">' + b.label + '</span> 这一档用窄 Q（8–14）切 <b>3–6 dB</b>，先切 3 dB，不够再一档档加深；切完往回退一点，找到刚好不响的位置。图示均衡器上就是标着 ' + b.label + ' 的那一根推子。</div>' +
             '<div class="action"><b>查位置：</b>话筒离音箱 / 返送是不是太近或正对着？挪开距离、偏开角度，往往比继续切 EQ 更管用。</div>' +
             '<p style="font-size:13.5px;color:var(--ink-soft)">声音停了这一栏也不会消失，会一直留着给你慢慢调；之后测到新的啸叫，会自动更新成最新一次。处理完、想重新监测时，点下面的按钮才会清除。</p>' +
             '<div class="live-lock-actions"><button class="btn" id="btn-live-recheck"><i data-lucide="rotate-ccw" width="17" height="17"></i><span>重新监测（清除上面的数值）</span></button></div>';
@@ -1782,16 +1886,25 @@
             return;
           }
           function rel(i) { return liveSmooth[i] - mean; }
-          function relAvg(a, b) { return (liveSmooth[a] + liveSmooth[b]) / 2 - mean; }
+          /* liveSmooth is on the 25-step 1/3-octave grid (FB_BANDS):
+             the advice groups below are the same frequency regions as
+             before, expressed as step ranges — 63–125 Hz = steps 0–3,
+             250–500 Hz = 6–9, 1 kHz = 12, 2–4 kHz = 15–18, 4 kHz = 18,
+             8 kHz = 21, 8–16 kHz = 21–24. Thresholds unchanged. */
+          function relRange(a, b) {
+            var s = 0;
+            for (var i = a; i <= b; i++) s += liveSmooth[i];
+            return s / (b - a + 1) - mean;
+          }
           var lines = [];
           if (liveFb >= 0) lines.push('有啸叫先止啸（看上方红色提示），止住之后再看下面的整体建议。');
-          if (relAvg(0, 1) > 6) lines.push('建议：低频（63 / 125 Hz）明显偏多，容易轰、糊——先开高通滤波，或把低频减 2–3 dB。');
-          if (relAvg(2, 3) > 5) lines.push('建议：250–500 Hz 偏高，声音容易发闷、像隔着箱子——减 2–3 dB，人声往往马上变清楚。');
-          if (rel(4) > 7) lines.push('建议：1 kHz 偏突出，容易有电话音、鼻音——人声小减 1–2 dB，或给伴奏在这一段让一点位。');
-          if (relAvg(5, 6) > 6) lines.push('建议：2–4 kHz 偏亮、偏刺——减 2–3 dB；这一带也最容易啸叫，推的时候要格外小心。');
-          else if (rel(6) > 7) lines.push('建议：4 kHz 偏突出，咬字边缘发硬——在 4 kHz 轻减 2 dB 左右。');
-          if (rel(7) > 7) lines.push('建议：8 kHz 偏高，齿音（嘶嘶声）可能刺耳——在 6–8 kHz 轻切 2–3 dB，别切过头，人声会发暗。');
-          if (relAvg(7, 8) < -8) lines.push('建议：高频偏少，声音可能发暗、缺空气感——可稍提 8 kHz 1–2 dB 试试；提之前先确认不是话筒离嘴太远或音箱高音的问题。');
+          if (relRange(0, 3) > 6) lines.push('建议：低频（63–125 Hz）明显偏多，容易轰、糊——先开高通滤波，或把低频减 2–3 dB。');
+          if (relRange(6, 9) > 5) lines.push('建议：250–500 Hz 偏高，声音容易发闷、像隔着箱子——减 2–3 dB，人声往往马上变清楚。');
+          if (rel(12) > 7) lines.push('建议：1 kHz 偏突出，容易有电话音、鼻音——人声小减 1–2 dB，或给伴奏在这一段让一点位。');
+          if (relRange(15, 18) > 6) lines.push('建议：2–4 kHz 偏亮、偏刺——减 2–3 dB；这一带也最容易啸叫，推的时候要格外小心。');
+          else if (rel(18) > 7) lines.push('建议：4 kHz 偏突出，咬字边缘发硬——在 4 kHz 轻减 2 dB 左右。');
+          if (rel(21) > 7) lines.push('建议：8 kHz 偏高，齿音（嘶嘶声）可能刺耳——在 6–8 kHz 轻切 2–3 dB，别切过头，人声会发暗。');
+          if (relRange(21, 24) < -8) lines.push('建议：高频偏少，声音可能发暗、缺空气感——可稍提 8 kHz 1–2 dB 试试；提之前先确认不是话筒离嘴太远或音箱高音的问题。');
           if (!lines.length) lines.push('各频段比较均衡，暂时不用动 EQ——建议保持现状，多听一会儿再判断。');
           liveSetAdvice(lines.slice(0, 4));
         }
@@ -1815,8 +1928,13 @@
             return isFinite(v) ? v : -100;
           }
           var bandDb = [], peakDb = [], peakF = [];
-          BANDS.forEach(function (b, i) {
-            var lo = b.f / 1.26, hi = b.f * 1.26;
+          /* Bands are the 25 1/3-octave steps (FB_BANDS): each step's
+             window is its own ±1/6 octave. The detection RULES are the
+             same as before — prominence over both neighbours, narrowness
+             over the band's own average, level floor, ~1 s sustain —
+             only the frequency grid got finer. */
+          FB_BANDS.forEach(function (b, i) {
+            var lo = b.f / 1.1225, hi = b.f * 1.1225;
             var b0 = Math.max(1, Math.floor(lo / nyq * nBins)), b1 = Math.min(nBins - 1, Math.ceil(hi / nyq * nBins));
             var acc = 0, cnt = 0, pk = -Infinity, pkF = b.f;
             for (var k = b0; k <= b1; k++) {
@@ -1829,7 +1947,7 @@
             peakDb.push(pk); peakF.push(pkF);
           });
           if (!liveSmooth) liveSmooth = bandDb.slice();
-          else for (var si = 0; si < BANDS.length; si++) liveSmooth[si] += (bandDb[si] - liveSmooth[si]) * 0.08;
+          else for (var si = 0; si < FB_BANDS.length; si++) liveSmooth[si] += (bandDb[si] - liveSmooth[si]) * 0.08;
 
           /* A band counts as feedback only when a narrow peak inside it
              towers over BOTH neighbouring bands (>=10 dB, or >=7 dB to
@@ -1838,10 +1956,10 @@
              (peak > -50 dBFS), and it stays there for ~1 second.
              Speech/music transients fail at least one of these. */
           var best = -1, bestProm = 0;
-          BANDS.forEach(function (b, i) {
+          FB_BANDS.forEach(function (b, i) {
             var neigh;
             if (i === 0) neigh = bandDb[1];
-            else if (i === BANDS.length - 1) neigh = bandDb[BANDS.length - 2];
+            else if (i === FB_BANDS.length - 1) neigh = bandDb[FB_BANDS.length - 2];
             else neigh = (bandDb[i - 1] + bandDb[i + 1]) / 2;
             var prom = peakDb[i] - neigh;
             var narrow = peakDb[i] - bandDb[i];
@@ -1868,7 +1986,7 @@
 
           /* --- meters + axis highlight --- */
           if (liveFrame % 3 === 0) {
-            BANDS.forEach(function (b, i) {
+            FB_BANDS.forEach(function (b, i) {
               var cell = $('lm-' + i);
               if (!cell) return;
               var pct = (liveSmooth[i] + 80) / 50 * 100;
@@ -1879,7 +1997,7 @@
             });
             var kids = $('live-axis').children;
             for (var ai = 0; ai < kids.length; ai++) {
-              kids[ai].classList.toggle('hot', liveFb >= 0 && Number(kids[ai].dataset.f) === BANDS[liveFb].f);
+              kids[ai].classList.toggle('hot', liveFb >= 0 && Number(kids[ai].dataset.f) === FB_BANDS[liveFb].f);
             }
           }
           if (now - liveLastAdvice > 800) { liveLastAdvice = now; liveAdviceUpdate(); }
@@ -1891,9 +2009,9 @@
           liveCtx2d.strokeStyle = lineCol;
           liveCtx2d.beginPath();
           for (var gy = 1; gy < 4; gy++) { liveCtx2d.moveTo(0, H * gy / 4); liveCtx2d.lineTo(W, H * gy / 4); }
-          BANDS.forEach(function (b) { var gx = freqX(b.f, W); liveCtx2d.moveTo(gx, 0); liveCtx2d.lineTo(gx, H); });
+          FB_BANDS.forEach(function (b) { var gx = freqX(b.f, W); liveCtx2d.moveTo(gx, 0); liveCtx2d.lineTo(gx, H); });
           liveCtx2d.stroke();
-          var hlF = liveFb >= 0 ? BANDS[liveFb].f : (liveCand >= 0 ? BANDS[liveCand].f : null);
+          var hlF = liveFb >= 0 ? FB_BANDS[liveFb].f : (liveCand >= 0 ? FB_BANDS[liveCand].f : null);
           if (hlF) {
             var hx = freqX(hlF, W);
             liveCtx2d.fillStyle = liveFb >= 0 ? 'rgba(239,125,117,.20)' : 'rgba(232,163,61,.14)';
@@ -1918,6 +2036,24 @@
 
         function renderBands() {
           elBands.innerHTML = '';
+          if (mode === 'feedback') {
+            /* 找啸叫 uses its own 1/3-octave grid (FB_BANDS, 25 steps) —
+               live feedback lands between octave centres, so this mode
+               must not share the 9-band grid the other modes train on.
+               Clicks still flow through onBandClick, which routes them
+               to answerFb / selectNotchBand in this mode. */
+            elBands.className = 'bands fb25';
+            FB_BANDS.forEach(function (b, bi) {
+              var btn = document.createElement('button');
+              btn.className = 'band';
+              btn.dataset.idx = bi;
+              btn.innerHTML = '<span class="fr mono">' + b.label + '</span><span class="nm">' + b.name + '</span>';
+              btn.addEventListener('click', function () { onBandClick(bi, btn); });
+              elBands.appendChild(btn);
+            });
+            if (fbSubmode === 'notch' && notchBandIdx >= 0) markSelected();
+            return;
+          }
           var list = mode === 'quiz' ? activeIdxList() : BANDS.map(function (_, i) { return i; });
           elBands.className = 'bands' + (list.length === 5 ? ' five' : '');
           list.forEach(function (bi) {
@@ -1933,7 +2069,7 @@
         }
 
         function markSelected() {
-          var sel = mode === 'solo' ? soloIdx : refIdx;
+          var sel = mode === 'solo' ? soloIdx : mode === 'feedback' ? notchBandIdx : refIdx;
           var kids = elBands.children;
           for (var i = 0; i < kids.length; i++) {
             kids[i].classList.toggle('sel', Number(kids[i].dataset.idx) === sel);
@@ -2111,7 +2247,7 @@
           ensureCtx();
           var begin = function () {
             stopFeedback(true);
-            var list = BANDS.map(function (_, i) { return i; });
+            var list = FB_BANDS.map(function (_, i) { return i; });
             var bi = list[Math.floor(Math.random() * list.length)];
             if (bi === fbBandIdx && fbBandIdx >= 0) bi = list[(list.indexOf(bi) + 1) % list.length];
             fbBandIdx = bi;
@@ -2122,7 +2258,7 @@
             try {
               fbOsc = ctx.createOscillator();
               fbOsc.type = 'sine';
-              fbOsc.frequency.value = BANDS[bi].f;
+              fbOsc.frequency.value = FB_BANDS[bi].f;
               fbGainNode = ctx.createGain();
               fbGainNode.gain.value = 0;
               fbOsc.connect(fbGainNode);
@@ -2198,7 +2334,7 @@
           var ok = bi === fbBandIdx;
           if (ok) fbRight++;
           fbScoreUpdate();
-          var band = BANDS[fbBandIdx];
+          var band = FB_BANDS[fbBandIdx];
           var kids = elBands.children;
           for (var i = 0; i < kids.length; i++) {
             var idx = Number(kids[i].dataset.idx);
@@ -2206,15 +2342,18 @@
             else if (idx === bi) kids[i].classList.add('wrong');
           }
           setBandsEnabled(false);
+          var near = ok ? '' : fbNearText(bi, fbBandIdx);
+          var nearSteps = Math.abs(bi - fbBandIdx);
           var fbEl = $('fb-feedback');
           fbEl.className = 'feedback show ' + (ok ? 'ok' : 'no');
           fbEl.innerHTML =
-            '<div class="head">' + (ok ? '<i data-lucide="check-circle-2" width="19" height="19"></i>听对了' : '<i data-lucide="x-circle" width="19" height="19"></i>不是这个频段') + '</div>' +
-            '<p>这次啸叫在 <b class="mono">' + band.label + '</b>（' + band.name + '）。' + FB_TRAITS[fbBandIdx] + '</p>' +
-            '<p style="color:var(--ink-soft)">啸叫还在响，频谱上标出的就是它——趁现在把它的音高记牢。想练着把它压下去，切到「止啸练习」，或点「停止啸叫」结束。</p>';
+            '<div class="head">' + (ok ? '<i data-lucide="check-circle-2" width="19" height="19"></i>听对了' : (near ? '<i data-lucide="x-circle" width="19" height="19"></i>很接近，就差一点' : '<i data-lucide="x-circle" width="19" height="19"></i>不是这个频段')) + '</div>' +
+            '<p>这次啸叫在 <b class="mono">' + band.label + '</b>（' + band.name + '区）。' + fbTraitFor(fbBandIdx) + '</p>' +
+            (near ? '<p class="action"><b>差在哪：</b>' + near + '</p>' : '') +
+            '<p style="color:var(--ink-soft)">啸叫还在响——趁现在把它的音高记牢。想练着把它压下去，切到「止啸练习」，或点「停止啸叫」结束。</p>';
           icons();
           if (fbEl.scrollIntoView) { try { fbEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
-          $('fb-status').innerHTML = ok ? '答对了。点「开始啸叫」换一个频段继续。' : '记住 <b>' + band.label + '</b> 这个音高，点「开始啸叫」再试。';
+          $('fb-status').innerHTML = ok ? '答对了。点「开始啸叫」换一个频段继续。' : (nearSteps === 1 ? '就差一档（1/3 倍频程），非常接近了。点「开始啸叫」再试。' : '记住 <b>' + band.label + '</b> 这个音高，点「开始啸叫」再试。');
         }
         function selectNotchBand(bi) {
           notchBandIdx = bi;
@@ -2222,8 +2361,8 @@
           applyEq();
           updateNotchMeter();
           $('fb-status').innerHTML = fbBandIdx >= 0
-            ? '已把窄切对准 <b>' + BANDS[bi].label + '</b>。拖深度、换 Q，听啸叫的变化——对准了它会明显变小。'
-            : '已选中 <b>' + BANDS[bi].label + '</b> 作为要切的频段。点「开始啸叫」，响起来后这把切就会生效。';
+            ? '已把窄切对准 <b>' + FB_BANDS[bi].label + '</b>。拖深度、换 Q，听啸叫的变化——对准了它会明显变小。'
+            : '已选中 <b>' + FB_BANDS[bi].label + '</b> 作为要切的频段。点「开始啸叫」，响起来后这把切就会生效。';
         }
         function updateNotchMeter() {
           var fill = $('notch-meter-fill'), label = $('notch-meter-label');
@@ -2253,17 +2392,22 @@
           var cut = effectiveNotchCut();
           var res = notchResidual();
           var head = '<div class="head">';
+          var stepsOff = notchBandIdx >= 0 ? notchBandIdx - fbBandIdx : 0;
           if (notchBandIdx < 0) {
             show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>还没选频段</div><p>先在下方频段区点你判断的啸叫频段——窄切得先对准地方，才谈得上深度和 Q。</p>');
-          } else if (notchBandIdx !== fbBandIdx) {
-            show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>频段没对准</div><p>你切的是 <b class="mono">' + BANDS[notchBandIdx].label + '</b>，啸叫其实在 <b class="mono">' + BANDS[fbBandIdx].label + '</b>——切错地方，啸叫一点没小，声音却先被切了一刀。' + FB_TRAITS[fbBandIdx] + ' 换到 ' + BANDS[fbBandIdx].label + ' 再试。</p>');
+          } else if (stepsOff !== 0 && res > 0.25) {
+            var nearTxt = fbNearText(notchBandIdx, fbBandIdx);
+            show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>频段没对准</div><p>你切的是 <b class="mono">' + FB_BANDS[notchBandIdx].label + '</b>，啸叫其实在 <b class="mono">' + FB_BANDS[fbBandIdx].label + '</b>，这一刀只压到它约 <b>' + cut.toFixed(1) + ' dB</b>，没压住。' + (nearTxt ? nearTxt + ' ' : '切错地方，声音却先被切了一刀。') + fbTraitFor(fbBandIdx) + ' 换到 ' + FB_BANDS[fbBandIdx].label + ' 再试。</p>');
           } else if (res > 0.25) {
-            show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>还没压住</div><p>频段对了（<b class="mono">' + BANDS[fbBandIdx].label + '</b>），但只压下去约 <b>' + cut.toFixed(1) + ' dB</b>，啸叫还剩不少。把深度加到 6–10 dB，或把 Q 调窄（窄 Q 在中心点切得更深）。</p>');
-          } else if (notchQ <= 2 || notchDepth > 12) {
-            show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>压住了，但切过头</div><p>啸叫是停了，可这一刀太' + (notchQ <= 2 ? '宽' : '深') + '：注意听音源，' + BANDS[fbBandIdx].label + ' 周围一大片都被切薄了。把 Q 调到 8–14、深度退到 6–10 dB，只切啸叫那一个点，声音的厚度要保住。</p>');
+            show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>还没压住</div><p>频段对了（<b class="mono">' + FB_BANDS[fbBandIdx].label + '</b>），但只压下去约 <b>' + cut.toFixed(1) + ' dB</b>，啸叫还剩不少。把深度加到 6–10 dB，或把 Q 调窄（窄 Q 在中心点切得更深）。</p>');
+          } else if (stepsOff === 0 && (notchQ <= 2 || notchDepth > 12)) {
+            show(false, head + '<i data-lucide="x-circle" width="19" height="19"></i>压住了，但切过头</div><p>啸叫是停了，可这一刀太' + (notchQ <= 2 ? '宽' : '深') + '：注意听音源，' + FB_BANDS[fbBandIdx].label + ' 周围一大片都被切薄了。把 Q 调到 8–14、深度退到 6–10 dB，只切啸叫那一个点，声音的厚度要保住。</p>');
+          } else if (stepsOff !== 0) {
+            if (!notchDone) { notchDone = true; fbNotchedCount++; fbScoreUpdate(); }
+            show(true, head + '<i data-lucide="check-circle-2" width="19" height="19"></i>压住了（差一档）</div><p>你切的是 <b class="mono">' + FB_BANDS[notchBandIdx].label + '</b>，啸叫其实在 <b class="mono">' + FB_BANDS[fbBandIdx].label + '</b>——只差 ' + Math.abs(stepsOff) + ' 档（1/3 倍频程），这一刀的边缘刚好够深，把它压下去了。' + fbNearText(notchBandIdx, fbBandIdx) + '</p><p>现场这样也能救急，但下次对准 ' + FB_BANDS[fbBandIdx].label + ' 本档，可以切得更浅、更不伤声音。</p>');
           } else {
             if (!notchDone) { notchDone = true; fbNotchedCount++; fbScoreUpdate(); }
-            show(true, head + '<i data-lucide="check-circle-2" width="19" height="19"></i>止啸成功</div><p>在 <b class="mono">' + BANDS[fbBandIdx].label + '</b> 用 Q ' + notchQ + '、切 ' + notchDepth + ' dB，啸叫压下去了，音源的厚度也还在——这就是现场要的手感。可以再点「开始啸叫」换个频段，或把深度慢慢往回退，找刚好不响的那一点。</p>');
+            show(true, head + '<i data-lucide="check-circle-2" width="19" height="19"></i>止啸成功</div><p>在 <b class="mono">' + FB_BANDS[fbBandIdx].label + '</b> 用 Q ' + notchQ + '、切 ' + notchDepth + ' dB，啸叫压下去了，音源的厚度也还在——这就是现场要的手感。可以再点「开始啸叫」换个频段，或把深度慢慢往回退，找刚好不响的那一点。</p>');
           }
           updateNotchMeter();
         }
@@ -2421,7 +2565,7 @@
           $('bands-title').querySelector('span').textContent =
             m === 'quiz' ? '被动了哪个频段？点一个'
             : m === 'solo' ? '点一个频段，只听这个频段自己的声音'
-            : m === 'feedback' ? (fbSubmode === 'notch' ? '点一个频段，把窄切对准它' : '啸叫大概在哪个频段？点一个')
+            : m === 'feedback' ? (fbSubmode === 'notch' ? '点一个频率，把窄切对准它' : '啸叫大概在哪个频率？点一个')
             : '点一个频段，听它被提升 / 衰减后的声音';
           btnNew.classList.toggle('hidden', m !== 'quiz' || inSet);
           elFeedback.className = 'feedback';
@@ -2610,7 +2754,7 @@
           fbEl.innerHTML = '';
           clearBandStates();
           setBandsEnabled(true);
-          $('bands-title').querySelector('span').textContent = fbSubmode === 'notch' ? '点一个频段，把窄切对准它' : '啸叫大概在哪个频段？点一个';
+          $('bands-title').querySelector('span').textContent = fbSubmode === 'notch' ? '点一个频率，把窄切对准它' : '啸叫大概在哪个频率？点一个';
           $('fb-status').innerHTML = fbSubmode === 'notch'
             ? '止啸练习：先在下方选要切的频段（也可以等响起来再选），调深度和 Q，再点「开始啸叫」——啸叫会和音源一起响，压得对不对，一听便知。'
             : '辨认练习：点「开始啸叫」，啸叫慢慢响起来后，在下方点你判断的频段。';
@@ -2779,9 +2923,10 @@
          Honest by design: this page usually runs inside Muse's embedded
          preview (a sandboxed iframe on a gateway origin), where browsers
          typically refuse service-worker registration and never offer an
-         install offer. Nothing below fakes success — the status line
-         reports what the browser actually allowed, and the manual
-         add-to-home-screen steps are shown either way. */
+         install offer. The panel shows only the manual add-to-home-screen
+         steps (plus the install button when the browser offers one);
+         there is deliberately no status line — the service worker still
+         registers silently in the background. */
       (function () {
         'use strict';
         var statusEl = document.getElementById('pwa-status');
