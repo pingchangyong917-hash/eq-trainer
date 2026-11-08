@@ -450,6 +450,10 @@
       .srcnote svg { flex: none; margin-top: 2px; color: var(--accent); }
       .srcnote b { color: var(--ink); }
       .hidden { display: none !important; }
+      /* When auto-scrolling to the Hz band list, leave room for the
+         sticky 返回主页 bar so the bands sit fully visible and tappable
+         below it instead of sliding underneath it. */
+      #panel-bands { scroll-margin-top: calc(84px + env(safe-area-inset-top, 0px)); }
     </style>
   </head>
   <body>
@@ -2065,6 +2069,44 @@
           $('fb-right').textContent = fbRight;
           $('fb-notched').textContent = fbNotchedCount;
         }
+        /* After 开始啸叫 is pressed, bring the Hz band list into view so
+           the user can tap an answer without manually scrolling every
+           time. Wait for the layout to settle first (double rAF + a
+           short delay) — a scroll issued in the same frame as the DOM
+           updates in begin() is dropped or mis-measured on iOS Safari.
+           Position is computed manually and scrolled with
+           window.scrollTo, which iOS honours more reliably than
+           scrollIntoView with smooth behaviour, and the offset leaves
+           room for the sticky 返回主页 bar so the bands end up fully
+           visible and tappable below it. */
+        function scrollToHzBands() {
+          var target = $('panel-bands') || $('bands');
+          if (!target) return;
+          var doScroll = function () {
+            if (!target || target.classList.contains('hidden')) return;
+            try {
+              var rect = target.getBoundingClientRect();
+              var y = rect.top + (window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || (document.body && document.body.scrollTop) || 0);
+              var offset = 92;
+              try {
+                var topEl = $('page-top');
+                if (topEl && !topEl.classList.contains('hidden')) offset = topEl.getBoundingClientRect().height + 22;
+              } catch (e) {}
+              var top = Math.max(0, Math.round(y - offset));
+              try { window.scrollTo({ top: top, behavior: 'smooth' }); }
+              catch (e) { window.scrollTo(0, top); }
+            } catch (e) {
+              try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e2) { try { target.scrollIntoView(); } catch (e3) {} }
+            }
+          };
+          if (window.requestAnimationFrame) {
+            requestAnimationFrame(function () {
+              requestAnimationFrame(function () { setTimeout(doScroll, 60); });
+            });
+          } else {
+            setTimeout(doScroll, 60);
+          }
+        }
         function startFeedback() {
           ensureCtx();
           var begin = function () {
@@ -2114,6 +2156,7 @@
             } else {
               $('fb-status').innerHTML = '啸叫正在慢慢响起来…仔细听它的音高和质感，在下方点一个频段作答。音量已经够了，别再调大。';
             }
+            scrollToHzBands();
           };
           if (ctx.state === 'running' || !ctx.resume) { begin(); return; }
           var rp = null;
@@ -2365,7 +2408,7 @@
           $('field-diff').classList.toggle('hidden', m !== 'quiz');
           $('field-refdir').classList.toggle('hidden', m !== 'ref');
           $('scorebar').classList.toggle('hidden', m !== 'quiz');
-          $('panel-play').classList.toggle('hidden', m === 'live' || m === 'zones');
+          $('panel-play').classList.toggle('hidden', m === 'live' || m === 'zones' || m === 'feedback');
           $('panel-ex').classList.toggle('hidden', m !== 'ex');
           $('panel-fb').classList.toggle('hidden', m !== 'feedback');
           $('panel-manual').classList.toggle('hidden', m !== 'manual');
