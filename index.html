@@ -448,12 +448,13 @@
       .page-top h2 { font-size: 20px; font-weight: 700; margin: 0; line-height: 1.3; }
       .back-btn {
         appearance: none; font: inherit; cursor: pointer; border-radius: 999px;
-        border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+        border: 1px solid var(--accent); background: var(--accent); color: #fff;
         padding: 9px 14px; display: inline-flex; align-items: center; gap: 7px;
         font-size: 14.5px; font-weight: 600; box-shadow: var(--shadow); flex: none;
         min-height: 48px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
       }
-      .back-btn:hover { border-color: var(--accent); }
+      .back-btn:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+      @media (prefers-color-scheme: dark) { .back-btn { color: #1c1503; } .back-btn:hover { color: #1c1503; } }
 
       /* In-flow return button at the end of every feature page:
          it scrolls with the page content, alongside the sticky
@@ -491,17 +492,6 @@
           <div>戴耳机、音量适中。每组 10 题，听的时候随时切回原声对比。</div>
         </div>
       </header>
-
-      <section class="panel" id="panel-level" aria-label="训练级别">
-        <h2><i data-lucide="layers" width="18" height="18"></i><span>训练级别 · 一级一级往上练</span></h2>
-        <div class="seg" id="seg-level-home" role="group" aria-label="训练级别">
-          <button data-level="begin" aria-pressed="true">入门 · 9 档</button>
-          <button data-level="mid" aria-pressed="false">进阶 · 16 档</button>
-          <button data-level="pro" aria-pressed="false">专业 · 25 档</button>
-        </div>
-        <p id="level-desc-home" style="margin:12px 0 0;font-size:14.5px"></p>
-        <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink-soft)">所有训练模式都按这个级别走：盲听测试、参考练习、单频段聆听、手动调 EQ 的推子数量、找啸叫的出题范围。现场监听的检测始终按专业 25 档报频率，不随级别降低精度。级别选好后进哪个模式都保持，返回主页也不会丢。</p>
-      </section>
 
       <div class="menu-head" id="home-menu-head">
         <h2>开始练习</h2>
@@ -2860,7 +2850,6 @@
           hideAllPanels();
           $('page-top').classList.add('hidden');
           $('level-bar').classList.add('hidden');
-          $('panel-level').classList.remove('hidden');
           $('home-header').classList.remove('hidden');
           $('home-menu').classList.remove('hidden');
           $('home-menu-head').classList.remove('hidden');
@@ -2874,7 +2863,6 @@
           $('home-menu').classList.add('hidden');
           $('home-menu-head').classList.add('hidden');
           $('panel-install').classList.add('hidden');
-          $('panel-level').classList.add('hidden');
           $('home-footer').classList.add('hidden');
           $('page-top').classList.remove('hidden');
           $('level-bar').classList.remove('hidden');
@@ -3016,7 +3004,7 @@
            chosen level itself is plain page state, so it survives
            going home and coming back. */
         function syncLevelUI() {
-          ['seg-level', 'seg-level-home'].forEach(function (id) {
+          ['seg-level'].forEach(function (id) {
             var seg = $(id);
             if (!seg) return;
             seg.querySelectorAll('button').forEach(function (b) {
@@ -3025,7 +3013,6 @@
           });
           var note = LEVELS[levelKey].note;
           if ($('level-note')) $('level-note').textContent = note;
-          if ($('level-desc-home')) $('level-desc-home').textContent = note;
           var n = gridBands().length;
           if ($('mq-count-label')) $('mq-count-label').textContent = n + ' 段推子';
         }
@@ -3092,7 +3079,7 @@
           if (mode === 'quiz') setBandsEnabled(true);
           applyEq();
         }
-        ['seg-level', 'seg-level-home'].forEach(function (id) {
+        ['seg-level'].forEach(function (id) {
           var seg = $(id);
           if (!seg) return;
           seg.addEventListener('click', function (e) {
